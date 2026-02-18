@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Market Shift Detection &mdash; Investment Recommendations v10.0</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+  :root {
+    --adia-gold: #C9A96E;
+    --adia-dark: #1A1A2E;
+    --adia-navy: #16213E;
+    --adia-steel: #0F3460;
+    --adia-light: #F5F2ED;
+    --text-primary: #2C2C2C;
+    --text-secondary: #5A5A5A;
+    --border-subtle: #E0DCD4;
+    --green: #2E7D32;
+    --amber: #E65100;
+    --red: #C62828;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: var(--text-primary);
+    background: #FFFFFF;
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  .top-nav { background: var(--adia-dark); padding: 0 80px; display: flex; gap: 0; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid rgba(201,169,110,0.2); flex-wrap: wrap; }
+  .nav-link { color: rgba(255,255,255,0.6); text-decoration: none; padding: 14px 20px; font-size: 12px; font-weight: 500; letter-spacing: 0.3px; border-bottom: 2px solid transparent; transition: all 0.2s; }
+  .nav-link:hover { color: rgba(255,255,255,0.9); background: rgba(255,255,255,0.05); }
+  .nav-link.active { color: var(--adia-gold); border-bottom-color: var(--adia-gold); }
+
+  .header {
+    background: linear-gradient(135deg, var(--adia-dark) 0%, var(--adia-navy) 50%, var(--adia-steel) 100%);
+    color: white; padding: 60px 80px; position: relative; overflow: hidden;
+  }
+  .header::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 40%; background: linear-gradient(135deg, transparent 0%, rgba(201, 169, 110, 0.08) 100%); }
+  .header h1 { font-size: 28px; font-weight: 600; letter-spacing: -0.5px; margin-bottom: 8px; position: relative; z-index: 1; }
+  .header .subtitle { font-size: 16px; font-weight: 300; color: rgba(255,255,255,0.7); margin-bottom: 24px; position: relative; z-index: 1; }
+  .header .meta { font-size: 13px; color: rgba(255,255,255,0.5); position: relative; z-index: 1; }
+  .header .meta span { margin-right: 32px; }
+  .doc-badge { display: inline-block; padding: 4px 14px; border-radius: 3px; font-size: 11px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 16px; background: rgba(201,169,110,0.2); color: var(--adia-gold); position: relative; z-index: 1; }
+
+  .gold-bar { height: 3px; background: linear-gradient(90deg, var(--adia-gold) 0%, transparent 70%); }
+  .container { max-width: 960px; margin: 0 auto; padding: 48px 80px; }
+
+  h2 { font-size: 20px; font-weight: 600; color: var(--adia-dark); margin-top: 48px; margin-bottom: 20px; padding-bottom: 8px; border-bottom: 2px solid var(--adia-gold); display: inline-block; }
+  h3 { font-size: 16px; font-weight: 600; color: var(--adia-navy); margin-top: 28px; margin-bottom: 12px; }
+  p { margin-bottom: 16px; text-align: justify; hyphens: auto; }
+  .lead { font-size: 15px; line-height: 1.8; color: var(--text-secondary); }
+
+  table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 13px; }
+  thead th { background: var(--adia-dark); color: white; padding: 10px 12px; text-align: left; font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+  tbody td { padding: 10px 12px; border-bottom: 1px solid var(--border-subtle); vertical-align: top; }
+  tbody tr:nth-child(even) { background: #FAFAF8; }
+  tbody tr:hover { background: rgba(201, 169, 110, 0.06); }
+
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 10px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; white-space: nowrap; }
+  .badge-high { background: #C8E6C9; color: #2E7D32; }
+  .badge-medium { background: #FFF9C4; color: #F57F17; }
+  .badge-low { background: #FFCDD2; color: #C62828; }
+  .badge-pass { background: #C8E6C9; color: #2E7D32; }
+  .badge-downgrade { background: #FFF3E0; color: #E65100; }
+
+  .badge-non-obv { display: inline-block; padding: 3px 10px; border-radius: 3px; font-size: 11px; font-weight: 700; letter-spacing: 0.3px; }
+  .badge-non-obv.s5 { background: #1B5E20; color: #fff; }
+  .badge-non-obv.s4 { background: #388E3C; color: #fff; }
+  .badge-non-obv.s3 { background: #FFA000; color: #fff; }
+  .badge-non-obv.s2 { background: #E65100; color: #fff; }
+
+  .badge-corr { display: inline-block; padding: 3px 10px; border-radius: 3px; font-size: 11px; font-weight: 700; letter-spacing: 0.3px; }
+  .badge-corr.high { background: #2E7D32; color: #fff; }
+  .badge-corr.med { background: #FFA000; color: #fff; }
+  .badge-corr.low { background: #C62828; color: #fff; }
+
+  .badge-orig { display: inline-block; padding: 3px 10px; border-radius: 3px; font-size: 11px; font-weight: 700; letter-spacing: 0.3px; }
+  .badge-orig.high { background: #1B5E20; color: #fff; }
+  .badge-orig.med { background: #FFA000; color: #fff; }
+  .badge-orig.low { background: #C62828; color: #fff; }
+
+  .ticker-link { font-weight: 700; color: var(--adia-navy); text-decoration: none; border-bottom: 2px solid var(--adia-gold); }
+  .ticker-link:hover { color: var(--adia-gold); }
+
+  .chain-section { margin-top: 48px; padding: 32px; border: 1px solid var(--border-subtle); border-radius: 8px; position: relative; }
+  .chain-section.downgrade { border-color: #FFA000; border-width: 2px; }
+  .chain-section.downgrade::before { content: 'DOWNGRADED'; position: absolute; top: -10px; right: 20px; background: #FFA000; color: white; font-size: 10px; font-weight: 700; padding: 2px 10px; border-radius: 3px; letter-spacing: 0.5px; }
+
+  .badges-row { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; align-items: center; }
+
+  .composite-bar-container { margin: 12px 0; }
+  .composite-bar-label { font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .composite-bar-bg { width: 100%; height: 8px; background: #E0DCD4; border-radius: 4px; overflow: hidden; }
+  .composite-bar-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--adia-gold) 0%, #2E7D32 100%); }
+
+  .corr-source { display: inline-block; margin: 2px 4px 2px 0; }
+  .corr-source .c-tag { display: inline-block; background: #E8EAF6; color: #283593; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 2px; margin-right: 3px; }
+
+  .caveat-box { background: #FFF3E0; border: 1px solid #FFE082; border-radius: 4px; padding: 12px 16px; margin: 12px 0; font-size: 13px; line-height: 1.6; }
+  .caveat-box strong { color: #E65100; font-size: 10px; letter-spacing: 0.5px; display: block; margin-bottom: 4px; text-transform: uppercase; }
+
+  .system-box { background: var(--adia-light); border-left: 4px solid var(--adia-gold); padding: 24px 28px; margin: 28px 0; border-radius: 0 4px 4px 0; }
+  .system-box p { margin-bottom: 8px; text-align: left; font-size: 14px; line-height: 1.7; color: var(--text-secondary); }
+  .system-box p:last-child { margin-bottom: 0; }
+
+  .chain-box { background: #F8F6F2; border: 1px solid var(--border-subtle); border-left: 3px solid var(--adia-navy); padding: 16px 20px; margin: 16px 0; border-radius: 0 4px 4px 0; font-size: 13px; line-height: 1.8; color: var(--text-secondary); }
+
+  .evidence-card { background: #FAFAF8; border: 1px solid var(--border-subtle); border-radius: 4px; padding: 14px 18px; margin: 12px 0; font-size: 13px; }
+  .evidence-card a { color: var(--adia-navy); text-decoration: none; border-bottom: 1px solid rgba(201,169,110,0.4); }
+  .evidence-card a:hover { color: var(--adia-gold); border-bottom-color: var(--adia-gold); }
+
+  .instrument-detail { border: 1px solid var(--border-subtle); border-radius: 6px; padding: 20px 24px; margin: 16px 0; background: #FEFEFE; }
+  .instrument-detail h4 { font-size: 14px; font-weight: 600; color: var(--adia-dark); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .instrument-detail .instrument-meta { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; font-size: 12px; color: var(--text-secondary); }
+  .instrument-detail .instrument-meta span { background: var(--adia-light); padding: 2px 8px; border-radius: 3px; }
+  .instrument-detail .thesis-text { font-size: 14px; line-height: 1.7; margin-bottom: 12px; color: var(--text-primary); text-align: justify; }
+  .instrument-detail .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px; margin: 12px 0; }
+  .instrument-detail .metric-item { background: var(--adia-light); padding: 8px 12px; border-radius: 4px; font-size: 12px; }
+  .instrument-detail .metric-item .metric-label { font-weight: 600; color: var(--text-secondary); text-transform: uppercase; font-size: 10px; letter-spacing: 0.5px; }
+  .instrument-detail .metric-item .metric-value { font-weight: 600; color: var(--adia-dark); font-size: 14px; }
+  .instrument-detail .metric-item .metric-date { font-size: 10px; font-weight: 400; color: var(--text-secondary); margin-top: 2px; }
+  .instrument-detail .catalyst-list { list-style: none; padding: 0; margin: 8px 0; }
+  .instrument-detail .catalyst-list li { padding: 4px 0; font-size: 13px; border-bottom: 1px solid rgba(0,0,0,0.05); }
+  .instrument-detail .catalyst-list li:last-child { border-bottom: none; }
+  .instrument-detail .catalyst-label { font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .instrument-detail .catalyst-label.near { color: var(--green); }
+  .instrument-detail .catalyst-label.medium { color: var(--amber); }
+  .instrument-detail .bear-case { background: #FFF8F0; border-left: 3px solid var(--amber); padding: 12px 16px; margin: 12px 0; border-radius: 0 4px 4px 0; font-size: 13px; }
+  .instrument-detail .source-list { font-size: 12px; color: var(--text-secondary); margin-top: 8px; }
+  .instrument-detail .source-list a { color: var(--adia-navy); text-decoration: none; border-bottom: 1px solid rgba(201,169,110,0.3); }
+  .instrument-detail .source-list a:hover { color: var(--adia-gold); }
+
+  .references-section { margin-top: 48px; padding-top: 32px; border-top: 2px solid var(--adia-gold); }
+  .references-section h2 { display: inline-block; margin-top: 0; }
+  .ref-entry { font-size: 12px; line-height: 1.6; margin-bottom: 6px; padding-left: 32px; text-indent: -32px; color: var(--text-secondary); }
+  .ref-entry a { color: var(--adia-navy); text-decoration: none; border-bottom: 1px solid rgba(201,169,110,0.4); }
+  .ref-entry a:hover { color: var(--adia-gold); border-bottom-color: var(--adia-gold); }
+
+  .footer { background: var(--adia-light); padding: 32px 80px; margin-top: 48px; font-size: 13px; color: var(--text-secondary); line-height: 1.8; }
+  .footer-meta { margin-top: 12px; font-size: 13px; color: #999; }
+
+  @media print { body { font-size: 11pt; } .header { padding: 40px 60px; } .container { padding: 32px 60px; } .top-nav { display: none; } }
+  @media (max-width: 768px) { .header { padding: 40px 24px; } .container { padding: 32px 24px; } .top-nav { padding: 0 24px; } .footer { padding: 24px; } }
+</style>
+</head>
+<body>
+
+<nav class="top-nav">
+  <a href="#summary" class="nav-link active">Executive Summary</a>
+  <a href="#ranking" class="nav-link">Ranking</a>
+  <a href="#chains" class="nav-link">Discovery Chains</a>
+  <a href="#references" class="nav-link">References</a>
+</nav>
+
+<div class="header">
+  <div class="doc-badge">v10.0-cognition-commoditization</div>
+  <h1>Market Shift Detection &mdash; Investment Recommendations</h1>
+  <div class="subtitle">8-Agent Auto-Discovery with Layer 2 Verification &amp; Per-Instrument Analysis | Run ID: run_20260217_001</div>
+  <div class="meta">
+    <span>PRODUCED_AT: 17 Feb 2026</span>
+    <span>8 Tier 1 Agents + 8 Layer 2 Verifiers</span>
+    <span>41 Chains Discovered &rarr; 7 Downgraded &rarr; 34 PASS</span>
+    <span>1,400+ URLs Explored</span>
+    <span>250+ Unique Sources Cited</span>
+  </div>
+</div>
+<div class="gold-bar"></div>
+
+<div class="container">
+
+<!-- ============ EXECUTIVE SUMMARY ============ -->
+<h2 id="summary">Executive Summary</h2>
+
+<p class="lead">Eight autonomous agents scanned equities, commodities, energy, materials, regulatory, robotics, semiconductors, and macro sectors for anomalies in January&ndash;February 2026, building 41 multi-hop causal chains grounded in the <strong>cognition-commoditization</strong> thesis: as AI inference costs collapse 50x (from $20/M tokens to $0.40/M tokens over 36 months), excess investment returns migrate from the cognition layer (AI software, Big Tech platforms, SaaS) toward physical-world constraints that AI requires &mdash; energy, materials, regulated physical assets, and the hardware substrate of computation. Seven chains were downgraded for factual errors or weak corroboration; 34 survive with verified evidence and calibrated composite scores.</p>
+
+<p class="lead">The highest-conviction cluster is <strong>physical infrastructure scarcity</strong> (12 chains, avg composite 83.7), anchored by ETA-003 (Electrical Transformer Bottleneck, composite 100 &mdash; the only perfect score) and DELTA-6 (Chile Copper-Water Co-Dependency, composite 98.6). These two chains establish that the 30% global transformer supply deficit and Chilean dual-scarcity (copper + water) represent structural bottlenecks that cannot be resolved within a single capital cycle, regardless of AI demand acceleration. The top 10 instruments by conviction are: <strong>ETN</strong> (Eaton, power equipment), <strong>FCX</strong> (Freeport-McMoRan, copper), <strong>CEG</strong> (Constellation Energy, nuclear), <strong>MP</strong> (MP Materials, rare earths), <strong>LYC.AX</strong> (Lynas, rare earths), <strong>000660.KS</strong> (SK Hynix, HBM4), <strong>TSM</strong> (TSMC, foundry), <strong>BABA</strong> (Alibaba, open-source AI), <strong>BVI.PA</strong> (Bureau Veritas, EU AI Act compliance), and <strong>GOOGL</strong> (Alphabet, SHORT &mdash; AI search cannibalization).</p>
+
+<p class="lead">Pipeline health assessment: 7 of 7 concentration/quality flags at WARNING level (no FAIL or ALERT). Key risks include Americas geographic overweight (44.1%, above 40% threshold), GOOGL single-company overweight (5 PASS chains), and thematic concentration in &ldquo;AI replaces knowledge workers&rdquo; (26.5% of PASS chains). The pipeline&rsquo;s 5.7% contradicted hop rate slightly exceeds the 5% threshold, driven primarily by the Eta agent&rsquo;s systemic copper data error (3 of 7 contradicted hops). Health Care representation is zero &mdash; a significant sectoral blind spot for future pipeline runs.</p>
+
+<!-- ============ COMPOSITE RANKING TABLE ============ -->
+<h2 id="ranking">Composite Ranking &mdash; All 41 Chains</h2>
+
+<table>
+  <thead>
+    <tr><th>#</th><th>Chain</th><th>Tickers</th><th>Comp.</th><th>NON_OBV</th><th>CORR</th><th>ORIG</th><th>Verdict</th><th>Conf.</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><a href="#chain-1">1</a></td>
+      <td>ETA-003: Electrical Transformer Bottleneck</td>
+      <td><a href="https://finance.yahoo.com/quote/ETN" class="ticker-link">ETN</a> <a href="https://finance.yahoo.com/quote/ABB" class="ticker-link">ABB</a></td>
+      <td><strong>100.0</strong></td>
+      <td><span class="badge-non-obv s5">5</span></td>
+      <td><span class="badge-corr high">1.00</span></td>
+      <td><span class="badge-orig high">5</span></td>
+      <td><span class="badge badge-pass">PASS</span></td>
+      <td><span class="badge badge-high">HIGH</span></td>
+    </tr>
+    <tr>
+      <td><a href="#chain-2">2</a></td>
+      <td>DELTA-6: Chile Copper-Water Co-Dependency</td>
+      <td><a href="https://finance.yahoo.com/quote/FCX" class="ticker-link">FCX</a> <a href="https://finance.yahoo.com/quote/SCCO" class="ticker-link">SCCO</a></td>
+      <td><strong>98.6</strong></td>
+      <td><span class="badge-non-obv s4">4</span></td>
+      <td><span class="badge-corr high">1.00</span></td>
+      <td><span class="badge-orig high">4</span></td>
+      <td><span class="badge badge-pass">PASS</span></td>
+      <td><span class="badge badge-high">HIGH</span></td>
+    </tr>
+    <tr>
+      <td><a href="#chain-3">3</a></td>
+      <td>ZETA-02: SoftBank/ABB Physical AI Stack</td>
+      <td><a href="https://finance.yahoo.com/quote/ABB" class="ticker-link">ABB</a> <a href="https://google.com/finance/quote/9984:TYO" class="ticker-link">9984.T</a></td>
+      <td><strong>91.6</strong></td>
+      <td><span class="badge-non-obv s4">4.5</span></td>
+      <td><span class="badge-corr high">0.87</span></td>
+      <td><span class="badge-orig high">5</span></td>
+      <td><span class="badge badge-pass">PASS</span></td>
+      <td><span class="badge badge-high">HIGH</span></td>
+    </tr>
+    <tr>
+      <td><a href="#chain-4">4</a></td>
+      <td>DELTA-5: Regulated Physical Moats</td>
+      <td><a href="https://finance.yahoo.com/quote/MP" class="ticker-link">MP</a> <a href="https://finance.yahoo.com/quote/EQIX" class="ticker-link">EQIX</a></td>
+      <td><strong>91.4</strong></td>
+      <td><span class="badge-non-obv s5">5</span></td>
+      <td><span class="badge-corr high">0.80</span></td>
+      <td><span class="badge-orig high">5</span></td>
+      <td><span class="badge badge-pass">PASS</span></td>
+      <td><span class="badge badge-high">HIGH</span></td>
+    </tr>
+    <tr>
+      <td><a href="#chain-5">5</a></td>
+      <td>BETA-02: Nuclear PPAs as Inference Cost Moat</td>
+      <td><a href="https://finance.yahoo.com/quote/CEG" class="ticker-link">CEG</a> <a href="https://finance.yahoo.com/quote/VST" class="ticker-link">VST</a></td>
+      <td><strong>88.7</strong></td>
+      <td><span class="badge-non-obv s4">4</span></td>
+      <td><span class="badge-corr high">0.87</span></td>
+      <td><span class="badge-orig high">5</span></td>
+      <td><span class="badge badge-pass">PASS</span></td>
+      <td><span class="badge badge-high">HIGH</span></td>
+    </tr>
+    <tr>
+      <td><a href="#chain-6">6</a></td>
+      <td>BETA-04: Middle East Sovereign AI + Solar</td>
+      <td><a href="https://finance.yahoo.com/quote/FSLR" class="ticker-link">FSLR</a></td>
+      <td><strong>88.7</strong></td>
+      <td><span class="badge-non-obv s4">4</span></td>
+      <td><span class="badge-corr high">0.87</span></td>
+      <td><span class="badge-orig high">5</span></td>
+      <td><span class="badge badge-pass">PASS</span></td>
+      <td><span class="badge badge-high">HIGH</span></td>
+    </tr>
+    <tr>
+      <td><a href="#chain-7">7</a></td>
+      <td>EPSILON-03: EU AI Act Notified Body Market</td>
+      <td><a href="https://google.com/finance/quote/BVI:EPA" class="ticker-link">BVI.PA</a></td>
+      <td><strong>88.6</strong></td>
+      <td><span class="badge-non-obv s4">4.5</span></td>
+      <td><span class="badge-corr high">0.80</span></td>
+      <td><span class="badge-orig high">5</span></td>
+      <td><span class="badge badge-pass">PASS</span></td>
+      <td><span class="badge badge-high">HIGH</span></td>
+    </tr>
+    <tr>
+      <td><a href="#chain-8">8</a></td>
+      <td>BETA-01: PJM Capacity Market Failure</td>
+      <td><a href="https://finance.yahoo.com/quote/ETN" class="ticker-link">ETN</a> <a href="https://finance.yahoo.com/quote/CEG" class="ticker-link">CEG</a></td>
+      <td><strong>88.6</strong></td>
+      <td><span class="badge-non-obv s4">4</span></td>
+      <td><span class="badge-corr high">1.00</span></td>
+      <td><span class="badge-orig high">4</span></td>
+      <td><span class="badge badge-pass">PASS</span></td>
+      <td><span class="badge badge-high">HIGH</span></td>
+    </tr>
+    <tr>
+      <td><a href="#chain-9">9</a></td>
+      <td>DELTA-3: Data Center Land + Power Bundle</td>
+      <td><a href="https://finance.yahoo.com/quote/EQIX" class="ticker-link">EQIX</a> <a href="https://finance.yahoo.com/quote/DLR" class="ticker-link">DLR</a></td>
+      <td><strong>84.3</strong></td>
+      <td><span class="badge-non-obv s4">4</span></td>
+      <td><span class="badge-corr high">0.90</span></td>
+      <td><span class="badge-orig high">4</span></td>
+      <td><span class="badge badge-pass">PASS</span></td>
+      <td><span class="badge badge-high">HIGH</span></td>
+    </tr>
+    <tr>
+      <td><a href="#chain-10">10</a></td>
+      <td>DELTA-4: Rare Earth Export Controls</td>
+      <td><a href="https://finance.yahoo.com/quote/MP" class="ticker-link">MP</a></td>
+      <td><strong>84.3</strong></td>
+      <td><span class="badge-non-obv s4">4</span></td>
+      <td><span class="badge-corr high">0.90</span></td>
+      <td><span class="badge-orig high">4</span></td>
+      <td><span class="badge badge-pass">PASS</span></td>
+      <td><span class="badge badge-high">HIGH</span></td>
+    </tr>
+    <!-- Ranks 11-34 PASS chains -->
+    <tr><td>11</td><td>EPSILON-02: AMLA + AMLR Compliance Stack</td><td><a href="https://google.com/finance/quote/BVI:EPA" class="ticker-link">BVI.PA</a></td><td><strong>84.3</strong></td><td><span class="badge-non-obv s4">4</span></td><td><span class="badge-corr high">0.90</span></td><td><span class="badge-orig high">4</span></td><td><span class="badge badge-pass">PASS</span></td><td><span class="badge badge-high">HIGH</span></td></tr>
+    <tr><td>12</td><td>BETA-05: NERC Demand Revision Shock (+224GW)</td><td><a href="https://finance.yahoo.com/quote/CEG" class="ticker-link">CEG</a> <a href="https://finance.yahoo.com/quote/ETN" class="ticker-link">ETN</a></td><td><strong>83.0</strong></td><td><span class="badge-non-obv s4">4</span></td><td><span class="badge-corr high">0.87</span></td><td><span class="badge-orig high">4</span></td><td><span class="badge badge-pass">PASS</span></td><td><span class="badge badge-high">HIGH</span></td></tr>
+    <tr><td>13</td><td>ZETA-05: Factory Permitting as Moat</td><td><a href="https://finance.yahoo.com/quote/TSM" class="ticker-link">TSM</a></td><td><strong>83.0</strong></td><td><span class="badge-non-obv s4">4</span></td><td><span class="badge-corr high">0.87</span></td><td><span class="badge-orig high">4</span></td><td><span class="badge badge-pass">PASS</span></td><td><span class="badge badge-high">HIGH</span></td></tr>
+    <tr><td>14</td><td>ETA-005: Critical Minerals Supercycle</td><td><a href="https://finance.yahoo.com/quote/MP" class="ticker-link">MP</a> <a href="https://google.com/finance/quote/LYC:ASX" class="ticker-link">LYC.AX</a></td><td><strong>83.0</strong></td><td><span class="badge-non-obv s4">4</span></td><td><span class="badge-corr high">0.87</span></td><td><span class="badge-orig high">4</span></td><td><span class="badge badge-pass">PASS</span></td><td><span class="badge badge-high">HIGH</span></td></tr>
+    <tr><td>15</td><td>DELTA-2: DRC Cobalt Export Quotas</td><td><a href="https://google.com/finance/quote/GLEN:LON" class="ticker-link">GLEN.L</a></td><td><strong>82.9</strong></td><td><span class="badge-non-obv s3">3</span></td><td><span class="badge-corr high">0.90</span></td><td><span class="badge-orig med">3</span></td><td><span class="badge badge-pass">PASS</span></td><td><span class="badge badge-high">HIGH</span></td></tr>
+    <tr><td>16</td><td>EPSILON-04: C2PA Content Provenance</td><td><a href="https://finance.yahoo.com/quote/DMRC" class="ticker-link">DMRC</a></td><td><strong>81.4</strong></td><td><span class="badge-non-obv s4">4</span></td><td><span class="badge-corr med">0.70</span></td><td><span class="badge-orig high">5</span></td><td><span class="badge badge-pass">PASS</span></td><td><span class="badge badge-high">HIGH</span></td></tr>
+    <tr><td>17</td><td>ZETA-01: Japanese Robotics Order Wave</td><td><a href="https://google.com/finance/quote/6954:TYO" class="ticker-link">6954.T</a></td><td><strong>80.1</strong></td><td><span class="badge-non-obv s3">3.5</span></td><td><span class="badge-corr high">0.87</span></td><td><span class="badge-orig high">4</span></td><td><span class="badge badge-pass">PASS</span></td><td><span class="badge badge-high">HIGH</span></td></tr>
+    <tr><td>18</td><td>GAMMA-004: Japan Photoresist Export Controls</td><td><a href="https://google.com/finance/quote/000660:KRX" class="ticker-link">000660.KS</a></td><td><strong>80.0</strong></td><td><span class="badge-non-obv s4">4</span></td><td><span class="badge-corr high">0.80</span></td><td><span class="badge-orig high">4</span></td><td><span class="badge badge-pass">PASS</span></td><td><span class="badge badge-high">HIGH</span></td></tr>
+    <tr><td>19</td><td>DELTA-1: AI Data Center Water Rights</td><td><a href="https://finance.yahoo.com/quote/AWK" class="ticker-link">AWK</a> <a href="https://finance.yahoo.com/quote/WTRG" class="ticker-link">WTRG</a></td><td><strong>80.0</strong></td><td><span class="badge-non-obv s4">4</span></td><td><span class="badge-corr high">0.80</span></td><td><span class="badge-orig high">4</span></td><td><span class="badge badge-pass">PASS</span></td><td><span class="badge badge-high">HIGH</span></td></tr>
+    <tr><td>20</td><td>EPSILON-01: eIDAS2 Digital Identity</td><td><a href="https://google.com/finance/quote/BVI:EPA" class="ticker-link">BVI.PA</a></td><td><strong>77.1</strong></td><td><span class="badge-non-obv s3">3.5</span></td><td><span class="badge-corr high">0.80</span></td><td><span class="badge-orig high">4</span></td><td><span class="badge badge-pass">PASS</span></td><td><span class="badge badge-medium">MED</span></td></tr>
+    <tr><td>21</td><td>GAMMA-002: SK Hynix HBM4 Allocation Moat</td><td><a href="https://google.com/finance/quote/000660:KRX" class="ticker-link">000660.KS</a></td><td><strong>75.7</strong></td><td><span class="badge-non-obv s4">4</span></td><td><span class="badge-corr med">0.70</span></td><td><span class="badge-orig high">4</span></td><td><span class="badge badge-pass">PASS</span></td><td><span class="badge badge-medium">MED</span></td></tr>
+    <tr><td>22</td><td>ALPHA-6: Inference Cost Deflation (27x)</td><td><a href="https://finance.yahoo.com/quote/BABA" class="ticker-link">BABA</a></td><td><strong>71.6</strong></td><td><span class="badge-non-obv s3">3</span></td><td><span class="badge-corr high">0.87</span></td><td><span class="badge-orig med">3</span></td><td><span class="badge badge-pass">PASS</span></td><td><span class="badge badge-medium">MED</span></td></tr>
+    <tr><td>23</td><td>THETA-3: GOOGL/BABA P/E Convergence</td><td><a href="https://finance.yahoo.com/quote/GOOGL" class="ticker-link">GOOGL</a> short / <a href="https://finance.yahoo.com/quote/BABA" class="ticker-link">BABA</a></td><td><strong>71.4</strong></td><td><span class="badge-non-obv s4">4</span></td><td><span class="badge-corr med">0.60</span></td><td><span class="badge-orig high">4</span></td><td><span class="badge badge-pass">PASS</span></td><td><span class="badge badge-medium">MED</span></td></tr>
+    <tr><td>24</td><td>ZETA-04: Amazon AMR Physical Network</td><td><a href="https://finance.yahoo.com/quote/AMZN" class="ticker-link">AMZN</a></td><td><strong>71.4</strong></td><td><span class="badge-non-obv s2">2.5</span></td><td><span class="badge-corr med">0.70</span></td><td><span class="badge-orig med">3</span></td><td><span class="badge badge-pass">PASS</span></td><td><span class="badge badge-medium">MED</span></td></tr>
+    <tr><td>25</td><td>EPSILON-05: US State AI Legislation</td><td>&mdash;</td><td><strong>68.6</strong></td><td><span class="badge-non-obv s3">3.5</span></td><td><span class="badge-corr med">0.60</span></td><td><span class="badge-orig high">4</span></td><td><span class="badge badge-pass">PASS</span></td><td><span class="badge badge-medium">MED</span></td></tr>
+    <tr><td>26</td><td>ALPHA-2: Google Search CTR Collapse</td><td><a href="https://finance.yahoo.com/quote/GOOGL" class="ticker-link">GOOGL</a> short</td><td><strong>65.6</strong></td><td><span class="badge-non-obv s3">3</span></td><td><span class="badge-corr med">0.73</span></td><td><span class="badge-orig med">3</span></td><td><span class="badge badge-pass">PASS</span></td><td><span class="badge badge-medium">MED</span></td></tr>
+    <tr><td>27</td><td>ALPHA-3: Azure Margin Compression</td><td><a href="https://finance.yahoo.com/quote/MSFT" class="ticker-link">MSFT</a> short</td><td><strong>65.6</strong></td><td><span class="badge-non-obv s3">3</span></td><td><span class="badge-corr med">0.73</span></td><td><span class="badge-orig med">3</span></td><td><span class="badge badge-pass">PASS</span></td><td><span class="badge badge-medium">MED</span></td></tr>
+    <tr><td>28</td><td>BETA-03: Liquid Cooling Mandatory Adoption</td><td><a href="https://finance.yahoo.com/quote/VRT" class="ticker-link">VRT</a></td><td><strong>65.6</strong></td><td><span class="badge-non-obv s3">3</span></td><td><span class="badge-corr med">0.73</span></td><td><span class="badge-orig med">3</span></td><td><span class="badge badge-pass">PASS</span></td><td><span class="badge badge-medium">MED</span></td></tr>
+    <tr><td>29</td><td>GAMMA-001: TSMC CoWoS Packaging Monopoly</td><td><a href="https://finance.yahoo.com/quote/TSM" class="ticker-link">TSM</a></td><td><strong>64.3</strong></td><td><span class="badge-non-obv s3">3</span></td><td><span class="badge-corr med">0.70</span></td><td><span class="badge-orig med">3</span></td><td><span class="badge badge-pass">PASS</span></td><td><span class="badge badge-low">LOW</span></td></tr>
+    <tr><td>30</td><td>THETA-4: Hyperscaler Capex Scissors</td><td><a href="https://finance.yahoo.com/quote/MSFT" class="ticker-link">MSFT</a> short / <a href="https://finance.yahoo.com/quote/VRT" class="ticker-link">VRT</a></td><td><strong>64.3</strong></td><td><span class="badge-non-obv s3">3</span></td><td><span class="badge-corr med">0.70</span></td><td><span class="badge-orig med">3</span></td><td><span class="badge badge-pass">PASS</span></td><td><span class="badge badge-low">LOW</span></td></tr>
+    <tr><td>31</td><td>ALPHA-1: Open-Source LLM Parity (Qwen)</td><td><a href="https://finance.yahoo.com/quote/BABA" class="ticker-link">BABA</a></td><td><strong>60.0</strong></td><td><span class="badge-non-obv s3">3</span></td><td><span class="badge-corr med">0.60</span></td><td><span class="badge-orig med">3</span></td><td><span class="badge badge-pass">PASS</span></td><td><span class="badge badge-low">LOW</span></td></tr>
+    <tr><td>32</td><td>ALPHA-5: European Telecom Analogy</td><td><a href="https://finance.yahoo.com/quote/GOOGL" class="ticker-link">GOOGL</a> short</td><td><strong>60.0</strong></td><td><span class="badge-non-obv s3">3</span></td><td><span class="badge-corr med">0.60</span></td><td><span class="badge-orig med">3</span></td><td><span class="badge badge-pass">PASS</span></td><td><span class="badge badge-low">LOW</span></td></tr>
+    <tr><td>33</td><td>THETA-2: European Telecom Autopsy</td><td><a href="https://finance.yahoo.com/quote/GOOGL" class="ticker-link">GOOGL</a> short / VOD.L</td><td><strong>60.0</strong></td><td><span class="badge-non-obv s3">3</span></td><td><span class="badge-corr med">0.60</span></td><td><span class="badge-orig med">3</span></td><td><span class="badge badge-pass">PASS</span></td><td><span class="badge badge-low">LOW</span></td></tr>
+    <tr><td>34</td><td>THETA-1: Open-Source LLM / Enterprise MLOps</td><td>&mdash;</td><td><strong>55.7</strong></td><td><span class="badge-non-obv s3">3</span></td><td><span class="badge-corr low">0.50</span></td><td><span class="badge-orig med">3</span></td><td><span class="badge badge-pass">PASS</span></td><td><span class="badge badge-low">LOW</span></td></tr>
+    <!-- DOWNGRADE chains (7) -->
+    <tr><td>35</td><td>GAMMA-003: TSMC N2 Fabrication Royalty</td><td><a href="https://finance.yahoo.com/quote/TSM" class="ticker-link">TSM</a></td><td><strong>68.6</strong></td><td><span class="badge-non-obv s3">3</span></td><td><span class="badge-corr high">0.80</span></td><td><span class="badge-orig med">3</span></td><td><span class="badge badge-downgrade">DOWNGRADE</span></td><td><span class="badge badge-medium">MED</span></td></tr>
+    <tr><td>36</td><td>ETA-001: Copper Supercycle (Data Error)</td><td><a href="https://finance.yahoo.com/quote/FCX" class="ticker-link">FCX</a></td><td><strong>68.4</strong></td><td><span class="badge-non-obv s4">4</span></td><td><span class="badge-corr low">0.53</span></td><td><span class="badge-orig high">4</span></td><td><span class="badge badge-downgrade">DOWNGRADE</span></td><td><span class="badge badge-medium">MED</span></td></tr>
+    <tr><td>37</td><td>ETA-002: Uranium Supercycle (Price Error)</td><td><a href="https://finance.yahoo.com/quote/CCJ" class="ticker-link">CCJ</a></td><td><strong>68.4</strong></td><td><span class="badge-non-obv s4">4</span></td><td><span class="badge-corr low">0.53</span></td><td><span class="badge-orig high">4</span></td><td><span class="badge badge-downgrade">DOWNGRADE</span></td><td><span class="badge badge-medium">MED</span></td></tr>
+    <tr><td>38</td><td>THETA-5: Capital Rotation (Chile Error)</td><td>ETN / GOOGL short</td><td><strong>67.1</strong></td><td><span class="badge-non-obv s4">4</span></td><td><span class="badge-corr low">0.50</span></td><td><span class="badge-orig high">4</span></td><td><span class="badge badge-downgrade">DOWNGRADE</span></td><td><span class="badge badge-medium">MED</span></td></tr>
+    <tr><td>39</td><td>ZETA-03: China Dark Factory</td><td>&mdash;</td><td><strong>57.3</strong></td><td><span class="badge-non-obv s3">3</span></td><td><span class="badge-corr low">0.47</span></td><td><span class="badge-orig med">3.5</span></td><td><span class="badge badge-downgrade">DOWNGRADE</span></td><td><span class="badge badge-low">LOW</span></td></tr>
+    <tr><td>40</td><td>ALPHA-4: SaaS Switching Cost Collapse</td><td>&mdash;</td><td><strong>54.4</strong></td><td><span class="badge-non-obv s3">3</span></td><td><span class="badge-corr low">0.47</span></td><td><span class="badge-orig med">3</span></td><td><span class="badge badge-downgrade">DOWNGRADE</span></td><td><span class="badge badge-low">LOW</span></td></tr>
+    <tr><td>41</td><td>ETA-004: Historical Supercycle Verification</td><td>&mdash;</td><td><strong>51.4</strong></td><td><span class="badge-non-obv s3">3</span></td><td><span class="badge-corr low">0.40</span></td><td><span class="badge-orig med">3</span></td><td><span class="badge badge-downgrade">DOWNGRADE</span></td><td><span class="badge badge-low">LOW</span></td></tr>
+  </tbody>
+</table>
+
+<!-- ============ DISCOVERY CHAINS (Full Detail — Top 10) ============ -->
+<h2 id="chains">Discovery Chains &mdash; Top 10</h2>
+
+<!-- ══════ CHAIN #1 ══════ -->
+<div class="chain-section" id="chain-1">
+
+<h3>#1 &mdash; ETA-003: Electrical Transformer Bottleneck</h3>
+
+<!-- A: Chain Overview -->
+<div class="badges-row">
+  <span class="badge-non-obv s5">NON_OBV 5</span>
+  <span class="badge-corr high">CORR 1.00</span>
+  <span class="badge-orig high">ORIG 5</span>
+  <span class="badge badge-pass">PASS</span>
+  <span class="badge badge-high">HIGH</span>
+</div>
+<div class="composite-bar-container">
+  <div class="composite-bar-label">Composite: 100.0</div>
+  <div class="composite-bar-bg"><div class="composite-bar-fill" style="width:100%"></div></div>
+</div>
+<p style="font-size:12px; color: var(--text-secondary); margin-bottom:8px;"><strong>Estimated lifetime:</strong> 5&ndash;15 years (structural horizon through 2035+) &mdash; transformer supply deficit persists until global manufacturing capacity expands by 30%+, requiring 3-7 years of factory construction.</p>
+
+<!-- B: Causal Mechanism -->
+<p>The global power transformer market faces a structural 30% supply deficit (Wood Mackenzie 2025), driven simultaneously by AI data center electricity demand (125+ GW pipeline), grid modernization requirements from the energy transition, and aging transformer replacement cycles. With 1,400 GW of generation projects unable to connect to the grid due to transformer shortages and US interconnection queue wait times exceeding 4 years (LBNL), the bottleneck creates a once-in-a-generation pricing power opportunity for transformer oligopoly members. The US tariff on transformer imports (Executive Order, June 2025) compounds the domestic shortage at precisely the moment when NERC projects 224 GW of additional demand over 10 years &mdash; a 69% upward revision, the largest in NERC history. Every dollar of AI inference cost deflation accelerates the data center buildout that requires transformers taking 2-3 years to produce; the supply deficit deepens faster than capacity can respond.</p>
+
+<!-- C: Key Evidence -->
+<div class="evidence-card">
+  <strong>Key Evidence:</strong><br>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://www.woodmac.com">Wood Mackenzie: 30% global transformer supply deficit (2025)</a></span>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://emp.lbl.gov/queues">LBNL: 1,400 GW interconnection queue; 4+ year wait times</a></span>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://www.nerc.com/pa/RAPA/ra/Pages/default.aspx">NERC LTRA 2026: +224 GW demand revision (69% increase)</a></span>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://www.ferc.gov/">FERC: US Executive Order on transformer import tariffs (June 2025)</a></span>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://www.pjm.com/-/media/DotCom/markets-ops/rpm/rpm-auction-info/2027-2028/2027-2028-bra-report.pdf">PJM BRA: $333.44/MW-day capacity price cap hit</a></span>
+</div>
+
+<!-- D: Geographic Scope -->
+<div class="system-box">
+  <p><strong>Geographic Scope:</strong> Multi-Region (Americas primary &mdash; PJM, ERCOT, MISO grids; EMEA secondary &mdash; European grid modernization under REPowerEU). The transformer shortage is global but most acute in the US where AI data center concentration intersects with aging grid infrastructure.</p>
+</div>
+
+<!-- E: Sector Tags -->
+<div class="system-box">
+  <p><strong>Sector Tags:</strong> Utilities (GICS 55), Energy Equipment &amp; Services (GICS 10), Industrials (GICS 20). Cross-sector chain affecting power generation, transmission, distribution, and end-user data center operators.</p>
+</div>
+
+<!-- F: Why Now -->
+<div class="system-box">
+  <p><strong>Why Now:</strong> 2026 is the inflection year when AI data center power demand (125+ GW pipeline, NERC +224 GW revision) meets the physical grid transformer shortage simultaneously. PJM&rsquo;s capacity market hitting the $333.44/MW-day administrative cap for the first time since 2012 signals that grid stress is no longer theoretical. Transformer lead times of 2-3 years mean orders placed today will not deliver until 2028-2029, ensuring the bottleneck persists through the decade.</p>
+</div>
+
+<!-- G: Cross-Asset Implications -->
+<div class="system-box">
+  <p><strong>Cross-Asset Implications &mdash; Bullish:</strong> Power equipment OEMs (ETN, ABB, ENR.DE), grain-oriented electrical steel (GOES) producers (CLF), grid infrastructure REITs with secured interconnection (EQIX, DLR), nuclear fleet operators benefiting from capacity scarcity (CEG, VST).</p>
+  <p><strong>Cross-Asset Implications &mdash; Bearish:</strong> Data center developers facing power delivery delays (extended timelines to energize new facilities), hyperscalers whose capex timelines stretch beyond current guidance (MSFT $120B FY2026 capex may not translate to proportional capacity additions).</p>
+</div>
+
+<!-- H: Position Framing -->
+<div class="instrument-detail">
+  <h4>
+    <a href="https://finance.yahoo.com/quote/ETN" class="ticker-link">ETN</a> &mdash; Eaton Corporation PLC
+    <span class="badge badge-high" style="font-size:9px;">LONG</span>
+  </h4>
+  <div class="instrument-meta">
+    <span>EQUITY</span><span>NYSE</span><span>Confidence: HIGH</span><span>Chains: #1, #8, #12</span>
+  </div>
+  <div class="thesis-text">
+    <p>Eaton Corporation sits at the precise intersection of the cognition-commoditization thesis: every data center requires transformers, switchgear, power distribution units, and electrical panels &mdash; all product lines where Eaton holds market-leading positions. The transformer bottleneck (ETA-003) establishes a structural 30% supply deficit with 1,400 GW in the interconnection queue, while PJM capacity market failure (BETA-01) and NERC&rsquo;s 224 GW demand revision (BETA-05) ensure multi-year order visibility.</p>
+    <p>With ~$72B market cap, 35-45% revenue from the power sector, and multi-year transformer backlogs at 18-24 month delivery lead times, Eaton captures pricing power from the most severe grid infrastructure constraint in a generation. The company is not subject to AI disruption risk &mdash; it is a capital-goods company benefiting from AI&rsquo;s physical infrastructure demands.</p>
+  </div>
+  <div class="metrics-grid">
+    <div class="metric-item"><div class="metric-label">Market Cap</div><div class="metric-value"><a href="https://ir.eaton.com/financial-information/annual-reports">~$72B</a></div><div class="metric-date">as of 14 Feb 2026</div></div>
+    <div class="metric-item"><div class="metric-label">Revenue Exposure</div><div class="metric-value"><a href="https://ir.eaton.com/financial-information/annual-reports">35-45% to power sector</a></div><div class="metric-date">FY2025</div></div>
+    <div class="metric-item"><div class="metric-label">Price Action (3M)</div><div class="metric-value"><a href="https://finance.yahoo.com/quote/ETN" style="color: var(--green);">+40-60%</a></div><div class="metric-date">17 Nov 2025 &rarr; 17 Feb 2026</div></div>
+    <div class="metric-item"><div class="metric-label">EV/Revenue</div><div class="metric-value"><a href="https://ir.eaton.com/financial-information/annual-reports">~2.9x vs 5Y avg ~2.2x</a></div><div class="metric-date">as of 14 Feb 2026</div></div>
+    <div class="metric-item"><div class="metric-label">Liquidity</div><div class="metric-value"><a href="https://finance.yahoo.com/quote/ETN">HIGH &mdash; ~$400M avg daily vol</a></div><div class="metric-date">30-day avg as of 14 Feb 2026</div></div>
+  </div>
+  <h4 style="font-size:12px; margin-top:16px;">Catalyst Timeline</h4>
+  <ul class="catalyst-list">
+    <li><span class="catalyst-label near">NEAR-TERM (0-3mo):</span> Q1 2026 earnings showing order acceleration from data center customers; transformer delivery backlog updates; PJM capacity market rule changes from FERC</li>
+    <li><span class="catalyst-label medium">MEDIUM-TERM (3-12mo):</span> NERC 224 GW demand revision flows into utility integrated resource plans, triggering rate case approvals that fund new transformer procurement; TMI restart adds Eaton power distribution project (2027 target)</li>
+  </ul>
+  <div class="bear-case">
+    <strong>Bear Case</strong><br>
+    <strong>Primary Risk:</strong> <a href="https://www.woodmac.com">Trump &ldquo;Unleashing Energy&rdquo; permitting reform could accelerate grid interconnection; FERC Order 2023 may compress queue timelines from 4+ years; new entrants (Hyundai Electric, Chinese manufacturers) could add capacity faster than expected.</a><br>
+    <strong>Verifier Flags:</strong> <a href="https://emp.lbl.gov/queues">LBNL interconnection wait time cited as &ldquo;over 5 years&rdquo; by agent vs. verifier-corrected &ldquo;over 4 years&rdquo; &mdash; minor imprecision, within tolerance.</a><br>
+    <strong>Scenario Dependency:</strong> <a href="https://www.nerc.com/pa/RAPA/ra/Pages/default.aspx">AI data center power demand must materialize as projected by NERC. If model efficiency improvements reduce per-inference power demand by &gt;50%, the 224 GW demand revision would need downward adjustment.</a>
+  </div>
+</div>
+
+<!-- I: Bear Case (chain-level) -->
+<div class="system-box">
+  <p><strong>Bear Case:</strong> Trump &ldquo;Unleashing Energy&rdquo; permitting reform could accelerate grid interconnection and reduce queue wait times. Efficiency improvements in AI compute (MoE architectures reducing compute per inference by 90%) could moderate hyperscaler capex, slowing transformer demand. New transformer manufacturing capacity from ABB, Siemens Energy, Hitachi Energy, and Hyundai Electric could normalize pricing power within 3-5 years. GOES (grain-oriented electrical steel) shortages could limit even the oligopoly&rsquo;s ability to ramp production.</p>
+</div>
+
+<!-- J: Thesis Relevance -->
+<div class="system-box">
+  <p><strong>Thesis Relevance (Cognition-Commoditization):</strong> ETA-003 is the most direct expression of the thesis &mdash; every dollar of inference cost deflation accelerates data center buildout, which requires physical transformers that cannot be produced faster regardless of how cheap AI becomes. The transformer is the physical bottleneck through which all AI compute growth must pass. This chain scored a perfect 100 composite because the supply deficit is verified (CORR=1.00), the mechanism is novel (ORIG=5), and the implication is non-obvious (NON_OBV=5).</p>
+</div>
+
+<!-- K: Historical Analogues -->
+<div class="system-box">
+  <p><strong>Historical Analogues:</strong> (1) Permian Basin oil pipeline bottleneck (2017-2019): production outpaced takeaway capacity for 2+ years, creating $15-20/bbl regional price discounts until pipeline capacity expanded &mdash; similar dynamics where production capability outpaces infrastructure delivery. (2) Global semiconductor capacity shortage (2020-2022): TSMC and Samsung could not build fabs fast enough despite unlimited demand, resulting in 12-18 month lead times and premium pricing &mdash; parallel to the transformer 2-3 year lead time and 30% supply deficit.</p>
+</div>
+
+</div>
+<!-- END chain-section #1 -->
+
+<!-- ══════ CHAIN #2 ══════ -->
+<div class="chain-section" id="chain-2">
+
+<h3>#2 &mdash; DELTA-6: Chile Copper-Water Co-Dependency</h3>
+
+<div class="badges-row">
+  <span class="badge-non-obv s4">NON_OBV 4</span>
+  <span class="badge-corr high">CORR 1.00</span>
+  <span class="badge-orig high">ORIG 4</span>
+  <span class="badge badge-pass">PASS</span>
+  <span class="badge badge-high">HIGH</span>
+</div>
+<div class="composite-bar-container">
+  <div class="composite-bar-label">Composite: 98.6 (incl. GEO_BONUS 1.0)</div>
+  <div class="composite-bar-bg"><div class="composite-bar-fill" style="width:98.6%"></div></div>
+</div>
+<p style="font-size:12px; color: var(--text-secondary); margin-bottom:8px;"><strong>Estimated lifetime:</strong> 5&ndash;15 years (structural horizon through 2035+) &mdash; Chilean water scarcity is climatologically permanent; full desalination transition (66% seawater) projected by 2034.</p>
+
+<!-- B: Causal Mechanism -->
+<p>BHP&rsquo;s Cerro Colorado mine was permanently closed in December 2023 due to water license non-renewal by Chile&rsquo;s DGA &mdash; the first time a producing copper mine was eliminated by water rights rather than geology. Anglo American&rsquo;s Los Bronces saw output decline 30% in 2025 from water-related plant suspension. Cochilco reports 22.74 m&sup3;/s water extraction in 2024 (up 20.8%), yet the Atacama faces its 6th consecutive year of declining continental water. AI data centers require 330,000-420,000 tonnes of copper annually by 2030 (Macquarie), but Chile&rsquo;s dual-scarcity constraint means the world&rsquo;s largest copper province cannot expand output to meet demand. Water-secure producers (FCX Grasberg, Antofagasta with desalination) command a structural premium over water-insecure competitors.</p>
+
+<!-- C: Key Evidence -->
+<div class="evidence-card">
+  <strong>Key Evidence:</strong><br>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://www.mining.com/">BHP Cerro Colorado permanent closure (Dec 2023) &mdash; water license non-renewal</a></span>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://www.bhp.com/news/bhp-insights/2025/01/why-ai-tools-and-data-centres-are-driving-copper-demand">BHP Insights: AI data center copper demand 330-420K tonnes/year by 2030</a></span>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://www.cochilco.cl/">Cochilco: 22.74 m&sup3;/s extraction in 2024; Atacama 6th year declining water</a></span>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://www.woodmac.com">Wood Mackenzie: 304,000t refined copper deficit in 2025, widening to 400,000+t in 2026</a></span>
+</div>
+
+<!-- D: Geographic Scope -->
+<div class="system-box"><p><strong>Geographic Scope:</strong> Emerging Markets (Chile/Atacama primary). GEO_BONUS=1.0 applied for underrepresented EM region. Global copper market secondary.</p></div>
+
+<!-- E: Sector Tags -->
+<div class="system-box"><p><strong>Sector Tags:</strong> Materials (GICS 15), Mining, Copper. Cross-commodity chain involving copper and water rights.</p></div>
+
+<!-- F: Why Now -->
+<div class="system-box"><p><strong>Why Now:</strong> Cerro Colorado precedent established in 2023; DGA water rights reviews ongoing 2025; Codelco desalination comes online 2026, establishing water-secure producers as commanding premium over water-insecure peers. Wood Mackenzie projects 304,000t refined copper deficit in 2025 widening to 400,000+t in 2026 &mdash; the deficit is accelerating, not stabilizing.</p></div>
+
+<!-- G: Cross-Asset Implications -->
+<div class="system-box">
+  <p><strong>Bullish:</strong> Non-Chilean copper producers (FCX Grasberg), water-secured Chilean miners (Antofagasta with desalination), copper ETFs (COPX), desalination equipment manufacturers.</p>
+  <p><strong>Bearish:</strong> Chilean miners without secured water rights facing DGA non-renewal, manufacturers dependent on Chilean copper supply chain expansion.</p>
+</div>
+
+<!-- H: Position Framing -->
+<div class="instrument-detail">
+  <h4><a href="https://finance.yahoo.com/quote/FCX" class="ticker-link">FCX</a> &mdash; Freeport-McMoRan Inc. <span class="badge badge-high" style="font-size:9px;">LONG</span></h4>
+  <div class="instrument-meta"><span>EQUITY</span><span>NYSE</span><span>Confidence: HIGH</span><span>Chains: #2, #14</span></div>
+  <div class="thesis-text">
+    <p>Freeport-McMoRan is the premier publicly-listed copper company in the Western hemisphere. As Chilean production faces structural headwinds from water scarcity, FCX benefits through two mechanisms: (1) the global copper supply/demand balance tightens and prices rise, benefiting efficient producers including FCX; (2) FCX&rsquo;s Grasberg mine in Indonesia and US operations are not subject to Chilean water risks. With ~$60B market cap, 80%+ revenue from copper, and AI data center copper demand growing structurally, FCX is a pure expression of &ldquo;physical scarcity as inverse of cognitive abundance.&rdquo;</p>
+  </div>
+  <div class="metrics-grid">
+    <div class="metric-item"><div class="metric-label">Market Cap</div><div class="metric-value"><a href="https://fcx.com">~$60B</a></div><div class="metric-date">as of 14 Feb 2026</div></div>
+    <div class="metric-item"><div class="metric-label">Revenue Exposure</div><div class="metric-value"><a href="https://fcx.com">80%+ to copper</a></div><div class="metric-date">FY2025</div></div>
+    <div class="metric-item"><div class="metric-label">Price Action (3M)</div><div class="metric-value"><a href="https://finance.yahoo.com/quote/FCX" style="color: var(--green);">+15-25%</a></div><div class="metric-date">17 Nov 2025 &rarr; 17 Feb 2026</div></div>
+    <div class="metric-item"><div class="metric-label">EV/Revenue</div><div class="metric-value"><a href="https://fcx.com">~2.4x vs 5Y avg ~2.0x</a></div><div class="metric-date">as of 14 Feb 2026</div></div>
+    <div class="metric-item"><div class="metric-label">Liquidity</div><div class="metric-value"><a href="https://finance.yahoo.com/quote/FCX">HIGH &mdash; ~$500M avg daily vol</a></div><div class="metric-date">30-day avg as of 14 Feb 2026</div></div>
+  </div>
+  <h4 style="font-size:12px; margin-top:16px;">Catalyst Timeline</h4>
+  <ul class="catalyst-list">
+    <li><span class="catalyst-label near">NEAR-TERM (0-3mo):</span> LME copper price driven by Q1 2026 Chinese demand data; Chilean DGA water rights decisions; Wood Mackenzie quarterly deficit data</li>
+    <li><span class="catalyst-label medium">MEDIUM-TERM (3-12mo):</span> 2026 US tariff regime impacts on copper market; Grasberg production profile; Lone Star/Bagdad expansion milestones</li>
+  </ul>
+  <div class="bear-case">
+    <strong>Bear Case</strong><br>
+    <strong>Primary Risk:</strong> <a href="https://fcx.com">Chinese construction demand (~50% global copper) could weaken; US 50% tariffs on semi-refined copper create bifurcated market; full desalination transition (66% seawater by 2034) removes water constraint.</a><br>
+    <strong>Scenario Dependency:</strong> <a href="https://www.woodmac.com">AI data center copper demand must materialize as projected; Chinese property slowdown must not deepen enough to offset AI demand growth.</a>
+  </div>
+</div>
+
+<!-- I: Bear Case -->
+<div class="system-box"><p><strong>Bear Case:</strong> Full desalination transition (66% seawater by 2034 per Cochilco) removes the water constraint over the medium term. Chinese construction demand accounts for ~50% of global copper consumption and sustained slowdown offsets AI-driven demand. Copper recycling economics improve at high prices, providing 20-30% of incremental data center demand.</p></div>
+
+<!-- J: Thesis Relevance -->
+<div class="system-box"><p><strong>Thesis Relevance:</strong> Physical scarcity as inverse of cognitive abundance &mdash; every dollar of inference cost deflation creates economic incentive to deploy more AI compute, which requires more copper for wiring, heat exchangers, busbars, and transformer windings. Chile&rsquo;s dual-scarcity (copper concessions AND water rights) creates a supply constraint that cannot be resolved by capital alone.</p></div>
+
+<!-- K: Historical Analogues -->
+<div class="system-box"><p><strong>Historical Analogues:</strong> (1) South African electricity crisis constraining platinum production (2008-2015): infrastructure limitation suppressed commodity output for a decade. (2) California water rights limiting agricultural output in Central Valley (2012-2016): regulatory water allocation constraints permanently altered the agricultural production frontier.</p></div>
+
+</div>
+<!-- END chain-section #2 -->
+
+<!-- ══════ CHAIN #3 ══════ -->
+<div class="chain-section" id="chain-3">
+<h3>#3 &mdash; ZETA-02: SoftBank/ABB Physical AI Stack</h3>
+<div class="badges-row">
+  <span class="badge-non-obv s4">NON_OBV 4.5</span>
+  <span class="badge-corr high">CORR 0.87</span>
+  <span class="badge-orig high">ORIG 5</span>
+  <span class="badge badge-pass">PASS</span>
+  <span class="badge badge-high">HIGH</span>
+</div>
+<div class="composite-bar-container">
+  <div class="composite-bar-label">Composite: 91.6</div>
+  <div class="composite-bar-bg"><div class="composite-bar-fill" style="width:91.6%"></div></div>
+</div>
+<p style="font-size:12px; color: var(--text-secondary); margin-bottom:8px;"><strong>Estimated lifetime:</strong> 5&ndash;15 years (structural) &mdash; physical AI stack integration is a multi-decade competitive dynamic; SoftBank-ABB deal closing H2 2026 is the near-term catalyst.</p>
+
+<p>SoftBank&rsquo;s $5.375B acquisition of ABB Robotics (H2 2026 close pending) assembles a three-layer physical AI stack: hardware (ABB robots) + silicon (Arm IP) + software (Skild AI, which raised $1.4B on January 14, 2026, for a universal robot foundation model). ABB&rsquo;s Q4 2025 orders reached $10.3B &mdash; the first quarter exceeding $10B &mdash; driven by non-automotive robotics demand in electronics manufacturing and logistics. This closed-loop physical AI moat cannot be replicated by either a robotics OEM or a pure AI software company alone, because the integrated stack requires physical robot fleet data, custom silicon optimization, and AI software tuned to specific hardware &mdash; a defensibility layer that software-only AI commoditization cannot erode.</p>
+
+<div class="evidence-card">
+  <strong>Key Evidence:</strong><br>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://new.abb.com/investorrelations">ABB Q4 2025 orders $10.3B (first &gt;$10B quarter)</a></span>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://group.softbank/en/news">SoftBank $5.375B acquisition of ABB Robotics announced</a></span>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://www.skild.ai">Skild AI raises $1.4B (14 Jan 2026) for universal robot foundation model</a></span>
+</div>
+
+<div class="system-box"><p><strong>Geographic Scope:</strong> APAC (Japan primary &mdash; SoftBank HQ), Multi-Region (ABB Switzerland, global robotics market). Industrial robot demand driven by electronics manufacturing reshoring in US/Europe and continued Asian manufacturing automation.</p></div>
+<div class="system-box"><p><strong>Sector Tags:</strong> Industrials (GICS 20), Technology (GICS 45), Robotics, AI Hardware.</p></div>
+<div class="system-box"><p><strong>Why Now:</strong> SoftBank-ABB deal pending H2 2026 close &mdash; regulatory approval timeline is the gating factor. Skild AI&rsquo;s $1.4B raise in January 2026 signals investor conviction in general-purpose robot foundation models. First commercial deployments of AI-programmed industrial robots entering production in 2026. ABB Q4 orders exceeding $10B confirms demand inflection.</p></div>
+<div class="system-box">
+  <p><strong>Bullish:</strong> Industrial automation suppliers (Fanuc, Yaskawa), precision motion control, Arm-based chip designers, AI robotics software. ABB shareholders benefit from dual transformer + robotics tailwind.</p>
+  <p><strong>Bearish:</strong> Labor-intensive manufacturing (displaced by automation), traditional robotics integrators without AI capability, companies dependent on cheap labor in reshoring-affected regions.</p>
+</div>
+
+<div class="instrument-detail">
+  <h4><a href="https://finance.yahoo.com/quote/ABB" class="ticker-link">ABB</a> &mdash; ABB Ltd <span class="badge badge-high" style="font-size:9px;">LONG</span></h4>
+  <div class="instrument-meta"><span>EQUITY</span><span>NYSE / SIX</span><span>Confidence: HIGH</span><span>Chains: #1, #3</span></div>
+  <div class="thesis-text">
+    <p>ABB represents a dual-chain beneficiary: the world&rsquo;s leading transformer manufacturer (ETA-003) and a primary player in industrial robotics (ZETA-02). In transformers, ABB is part of a concentrated oligopoly with multi-year order visibility. In robotics, the SoftBank acquisition positions ABB&rsquo;s fleet as the hardware layer of the first vertically-integrated physical AI company. With ~$80B market cap, ~45% revenue from electrification and ~30% from robotics/automation, ABB captures upside from both infrastructure tailwinds simultaneously.</p>
+  </div>
+  <div class="metrics-grid">
+    <div class="metric-item"><div class="metric-label">Market Cap</div><div class="metric-value"><a href="https://new.abb.com/investorrelations">~$80B</a></div><div class="metric-date">as of 14 Feb 2026</div></div>
+    <div class="metric-item"><div class="metric-label">Revenue Exposure</div><div class="metric-value"><a href="https://new.abb.com/investorrelations">45% electrification + 30% robotics</a></div><div class="metric-date">FY2025</div></div>
+    <div class="metric-item"><div class="metric-label">Price Action (3M)</div><div class="metric-value"><a href="https://finance.yahoo.com/quote/ABB" style="color: var(--green);">+20-30%</a></div><div class="metric-date">17 Nov 2025 &rarr; 17 Feb 2026</div></div>
+    <div class="metric-item"><div class="metric-label">EV/Revenue</div><div class="metric-value"><a href="https://new.abb.com/investorrelations">~2.3x vs 5Y avg ~1.8x</a></div><div class="metric-date">as of 14 Feb 2026</div></div>
+    <div class="metric-item"><div class="metric-label">Liquidity</div><div class="metric-value"><a href="https://finance.yahoo.com/quote/ABB">HIGH &mdash; ~CHF 300M avg daily vol</a></div><div class="metric-date">30-day avg as of 14 Feb 2026</div></div>
+  </div>
+  <h4 style="font-size:12px; margin-top:16px;">Catalyst Timeline</h4>
+  <ul class="catalyst-list">
+    <li><span class="catalyst-label near">NEAR-TERM (0-3mo):</span> Q1 2026 earnings &mdash; transformer order backlog and robotics non-automotive order intake; SoftBank deal regulatory approval progress</li>
+    <li><span class="catalyst-label medium">MEDIUM-TERM (3-12mo):</span> SoftBank-ABB deal close (H2 2026); potential ABB Robotics partial IPO crystallizing robotics division valuation at premium multiple</li>
+  </ul>
+  <div class="bear-case">
+    <strong>Bear Case</strong><br>
+    <strong>Primary Risk:</strong> <a href="https://new.abb.com/investorrelations">Regulatory blocking of SoftBank-ABB deal; Chinese robotics alternatives (Estun, EFORT, Siasun) emerging faster with cheaper hardware; CHF strength risk for USD-based investors.</a><br>
+    <strong>Scenario Dependency:</strong> <a href="https://www.trendforce.com">AI-enabled robotics programming must reduce deployment costs enough to expand non-automotive TAM; global manufacturing capex must not enter recession cycle.</a>
+  </div>
+</div>
+
+<div class="system-box"><p><strong>Bear Case:</strong> Regulatory blocking of SoftBank-ABB deal by antitrust authorities. Chinese robotics competition (Estun, EFORT) with prices materially below ABB. CHF strength risk for USD-based investors. Global manufacturing recession deferring industrial automation capex.</p></div>
+<div class="system-box"><p><strong>Thesis Relevance:</strong> Physical AI stack is the physical-world analog of the software AI stack &mdash; as cognition commoditizes, the physical execution layer (robots, actuators, sensors) becomes the scarce resource. SoftBank is assembling the first vertically-integrated physical AI company, with ABB as the hardware foundation.</p></div>
+<div class="system-box"><p><strong>Historical Analogues:</strong> (1) Apple&rsquo;s vertical integration of hardware/software/silicon (iPhone 2007-present): created the most valuable company through integration, not individual component leadership. (2) Tesla&rsquo;s integration of vehicle hardware, FSD software, and custom D1 chips (2016-present): physical AI integration creating competitive moats.</p></div>
+</div>
+<!-- END chain-section #3 -->
+
+<!-- ══════ CHAIN #4 ══════ -->
+<div class="chain-section" id="chain-4">
+<h3>#4 &mdash; DELTA-5: Regulated Physical Moats</h3>
+<div class="badges-row">
+  <span class="badge-non-obv s5">NON_OBV 5</span>
+  <span class="badge-corr high">CORR 0.80</span>
+  <span class="badge-orig high">ORIG 5</span>
+  <span class="badge badge-pass">PASS</span>
+  <span class="badge badge-high">HIGH</span>
+</div>
+<div class="composite-bar-container">
+  <div class="composite-bar-label">Composite: 91.4</div>
+  <div class="composite-bar-bg"><div class="composite-bar-fill" style="width:91.4%"></div></div>
+</div>
+<p style="font-size:12px; color: var(--text-secondary); margin-bottom:8px;"><strong>Estimated lifetime:</strong> 5&ndash;15 years (structural) &mdash; regulatory moats operate on decadal timescales; 29-year mine development timeline is the ultimate expression.</p>
+
+<p>US mine development averages 29 years from discovery to production (S&amp;P Global, June 2024) &mdash; the second longest globally. C-band spectrum licenses commanded $80.9B in the 2020 FCC auction, and pipeline easements are legally perpetual (&ldquo;in perpetuity&rdquo;). These three asset classes share regulatory entitlement, scarcity, long duration, and inelastic demand. Trump&rsquo;s Unleashing Energy Executive Order (January 2025) and expanded DOD mineral funding authority elevate critical minerals to national security priority. The AI buildout simultaneously increases demand across all three categories &mdash; data centers need spectrum for 5G backhaul, pipelines for natural gas generation, and mining permits for copper/rare earths &mdash; making regulated physical moats the most durable asset class.</p>
+
+<div class="evidence-card">
+  <strong>Key Evidence:</strong><br>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://me.smenet.org">S&amp;P Global: US mine development averages 29 years (June 2024)</a></span>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://techblog.comsoc.org">FCC C-band spectrum auction: $80.9B (2020)</a></span>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://www.whitehouse.gov">Trump Unleashing Energy EO: expanded DOD mineral funding authority (Jan 2025)</a></span>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://www.mpmaterials.com">DOD $400M equity investment in MP Materials + $110/kg NdPr floor (July 2025)</a></span>
+</div>
+
+<div class="system-box"><p><strong>Geographic Scope:</strong> Americas (US primary &mdash; mining permits, spectrum licenses, pipeline easements).</p></div>
+<div class="system-box"><p><strong>Sector Tags:</strong> Materials (GICS 15), Real Estate (GICS 60), Utilities (GICS 55), Industrials (GICS 20).</p></div>
+<div class="system-box"><p><strong>Why Now:</strong> Trump national security framing of critical minerals elevates DOD backing; AI demand creates first genuine multi-commodity acceleration simultaneously; 29-year mine development timeline means any new entrant faces a generation-long wait.</p></div>
+<div class="system-box">
+  <p><strong>Bullish:</strong> Existing permit holders &mdash; MP Materials (Mountain Pass), Equinix (interconnection rights), pipeline operators with perpetual easements, spectrum license holders.</p>
+  <p><strong>Bearish:</strong> Companies requiring new permits (greenfield developers), sectors dependent on commodity abundance assumptions.</p>
+</div>
+
+<div class="instrument-detail">
+  <h4><a href="https://finance.yahoo.com/quote/MP" class="ticker-link">MP</a> &mdash; MP Materials Corp <span class="badge badge-high" style="font-size:9px;">LONG</span></h4>
+  <div class="instrument-meta"><span>EQUITY</span><span>NYSE</span><span>Confidence: HIGH</span><span>Chains: #4, #10, #14</span></div>
+  <div class="thesis-text">
+    <p>MP Materials is the only significant US-based rare earth miner and processor, operating Mountain Pass &mdash; the only active rare earth mine in the US. The DOD invested $400M in equity plus a 10-year $110/kg NdPr price floor (July 2025 SEC 8-K), converting a commodity cyclical into a government-backed regulated asset. Mountain Pass holds an active mining permit, operational processing, and developing magnet manufacturing &mdash; assets requiring 10-29 years to replicate from greenfield. With ~$4B market cap, MP occupies a strategic position that the US government has explicitly backed for national security.</p>
+  </div>
+  <div class="metrics-grid">
+    <div class="metric-item"><div class="metric-label">Market Cap</div><div class="metric-value"><a href="https://www.mpmaterials.com">~$4B</a></div><div class="metric-date">as of 14 Feb 2026</div></div>
+    <div class="metric-item"><div class="metric-label">Revenue Exposure</div><div class="metric-value"><a href="https://www.mpmaterials.com">100% rare earths</a></div><div class="metric-date">FY2025</div></div>
+    <div class="metric-item"><div class="metric-label">Price Action (3M)</div><div class="metric-value"><a href="https://finance.yahoo.com/quote/MP" style="color: var(--green);">+10-20%</a></div><div class="metric-date">17 Nov 2025 &rarr; 17 Feb 2026</div></div>
+    <div class="metric-item"><div class="metric-label">EV/Revenue</div><div class="metric-value"><a href="https://www.mpmaterials.com">~13x vs 5Y avg ~15x</a></div><div class="metric-date">as of 14 Feb 2026</div></div>
+    <div class="metric-item"><div class="metric-label">Liquidity</div><div class="metric-value"><a href="https://finance.yahoo.com/quote/MP">MED &mdash; ~$40M avg daily vol</a></div><div class="metric-date">30-day avg as of 14 Feb 2026</div></div>
+  </div>
+  <h4 style="font-size:12px; margin-top:16px;">Catalyst Timeline</h4>
+  <ul class="catalyst-list">
+    <li><span class="catalyst-label near">NEAR-TERM (0-3mo):</span> Chinese rare earth export data; additional DOD contracts or OEM supply agreements; NdPr spot price movements</li>
+    <li><span class="catalyst-label medium">MEDIUM-TERM (3-12mo):</span> Fort Worth magnet factory commissioning; November 2026 expiry of China export control suspension</li>
+  </ul>
+  <div class="bear-case">
+    <strong>Bear Case</strong><br>
+    <strong>Primary Risk:</strong> <a href="https://www.mpmaterials.com">Trade truce makes China controls permanent-off; Mountain Pass processing cost challenges; magnet factory execution risk at scale.</a>
+  </div>
+</div>
+
+<div class="system-box"><p><strong>Bear Case:</strong> Permitting reform (FAST Act, NEPA reform) compresses 29-year mine development timeline. Technological substitutes emerge for critical minerals. Spectrum efficiency improvements reduce scarcity premium for wireless licenses.</p></div>
+<div class="system-box"><p><strong>Thesis Relevance:</strong> Regulated physical moats are the ultimate expression of cognition-commoditization &mdash; as AI makes intelligence cheap, the binding constraints become physical assets that take decades to create and are protected by regulatory barriers that no amount of capital can bypass.</p></div>
+<div class="system-box"><p><strong>Historical Analogues:</strong> (1) Railroad land grants (1860s-1890s) creating century-long right-of-way moats that still generate returns today. (2) FCC spectrum auctions (1994-present) creating regulated scarcity in electromagnetic spectrum &mdash; AT&amp;T&rsquo;s spectrum portfolio is worth more than its physical infrastructure.</p></div>
+</div>
+
+<!-- ══════ CHAIN #5 ══════ -->
+<div class="chain-section" id="chain-5">
+<h3>#5 &mdash; BETA-02: Nuclear PPAs as Inference Cost Moat</h3>
+<div class="badges-row">
+  <span class="badge-non-obv s4">NON_OBV 4</span>
+  <span class="badge-corr high">CORR 0.87</span>
+  <span class="badge-orig high">ORIG 5</span>
+  <span class="badge badge-pass">PASS</span>
+  <span class="badge badge-high">HIGH</span>
+</div>
+<div class="composite-bar-container">
+  <div class="composite-bar-label">Composite: 88.7</div>
+  <div class="composite-bar-bg"><div class="composite-bar-fill" style="width:88.7%"></div></div>
+</div>
+<p style="font-size:12px; color: var(--text-secondary); margin-bottom:8px;"><strong>Estimated lifetime:</strong> 5&ndash;15 years (structural) &mdash; 20-year PPAs lock in cost advantages through 2045+; nuclear fleet is physically irreplaceable.</p>
+
+<p>Microsoft secured a 20-year, 835 MW Three Mile Island restart PPA. Meta is building a 6.6 GW nuclear portfolio (Clinton, Perry, Davis-Besse). Google signed a 500 MW Kairos SMR deal. Nuclear provides 90%+ capacity factor versus 25-35% for wind/solar, making it the only generation technology providing firm, carbon-free baseload at AI data center scale. Companies with secured nuclear PPAs possess a 5-10 year structural cost advantage of $15-30/MWh over competitors without nuclear access, creating a &ldquo;nuclear moat&rdquo; that is the energy-layer analog of a chip supply agreement.</p>
+
+<div class="evidence-card">
+  <strong>Key Evidence:</strong><br>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://www.datacenterdynamics.com">Microsoft 20-yr 835MW TMI restart PPA; $1.6B investment, $1B DOE loan guarantee (Nov 2025)</a></span>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://about.fb.com/news/2026/01/meta-nuclear-energy-projects-power-american-ai-leadership/">Meta 6.6 GW nuclear portfolio: Clinton 1,121 MW + Vistra Perry/Davis-Besse 2,609 MW</a></span>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://fticonsulting.com/insights/articles/powerful-duo-nuclear-data-centers">FTI Consulting: Nuclear provides 90%+ capacity factor vs 25-35% wind/solar</a></span>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://www.pjm.com">PJM: $333.44/MW-day capacity price cap &mdash; grid stress confirmation</a></span>
+</div>
+
+<div class="system-box"><p><strong>Geographic Scope:</strong> Americas (US primary &mdash; PJM footprint where nuclear fleet concentration is highest).</p></div>
+<div class="system-box"><p><strong>Sector Tags:</strong> Utilities (GICS 55), Energy (GICS 10), Nuclear.</p></div>
+<div class="system-box"><p><strong>Why Now:</strong> Microsoft TMI deal closed November 2025; Meta/Google contracts actively being signed throughout 2025-2026; PJM capacity market at $333.44/MW-day cap confirms grid stress; TMI restart on track for 2027.</p></div>
+<div class="system-box">
+  <p><strong>Bullish:</strong> Nuclear fleet operators (CEG, VST), uranium producers (CCJ), nuclear engineering firms. 20-year PPAs provide revenue visibility unprecedented in the power sector.</p>
+  <p><strong>Bearish:</strong> Fossil fuel peaker plants replaced in capacity auctions by nuclear; solar-only IPPs unable to provide firm baseload at required scale.</p>
+</div>
+
+<div class="instrument-detail">
+  <h4><a href="https://finance.yahoo.com/quote/CEG" class="ticker-link">CEG</a> &mdash; Constellation Energy Corp <span class="badge badge-high" style="font-size:9px;">LONG</span></h4>
+  <div class="instrument-meta"><span>EQUITY</span><span>NASDAQ</span><span>Confidence: HIGH</span><span>Chains: #5, #8, #12</span></div>
+  <div class="thesis-text">
+    <p>Constellation Energy operates the largest nuclear fleet of any private company in the US (~32 GW), with Microsoft&rsquo;s 835 MW TMI restart PPA and Meta&rsquo;s 1,121 MW Clinton PPA committed for 20 years. At $333.44/MW-day PJM capacity pricing, the fleet generates approximately $3.9B annually in capacity payments alone, before energy market revenues. The TMI restart ($1.6B investment, $1B DOE loan) adds 835 MW of additional capacity by 2027. With ~$60B market cap and 100% nuclear generation, CEG is the purest expression of nuclear infrastructure moat.</p>
+  </div>
+  <div class="metrics-grid">
+    <div class="metric-item"><div class="metric-label">Market Cap</div><div class="metric-value"><a href="https://www.constellationenergy.com/investors.html">~$60B</a></div><div class="metric-date">as of 14 Feb 2026</div></div>
+    <div class="metric-item"><div class="metric-label">Revenue Exposure</div><div class="metric-value"><a href="https://www.constellationenergy.com/investors.html">100% nuclear generation</a></div><div class="metric-date">FY2025</div></div>
+    <div class="metric-item"><div class="metric-label">Price Action (3M)</div><div class="metric-value"><a href="https://finance.yahoo.com/quote/CEG" style="color: var(--green);">+30-50%</a></div><div class="metric-date">17 Nov 2025 &rarr; 17 Feb 2026</div></div>
+    <div class="metric-item"><div class="metric-label">EV/Revenue</div><div class="metric-value"><a href="https://www.constellationenergy.com/investors.html">~2.4x vs 5Y avg ~1.5x</a></div><div class="metric-date">as of 14 Feb 2026</div></div>
+    <div class="metric-item"><div class="metric-label">Liquidity</div><div class="metric-value"><a href="https://finance.yahoo.com/quote/CEG">HIGH &mdash; ~$400M avg daily vol</a></div><div class="metric-date">30-day avg as of 14 Feb 2026</div></div>
+  </div>
+  <h4 style="font-size:12px; margin-top:16px;">Catalyst Timeline</h4>
+  <ul class="catalyst-list">
+    <li><span class="catalyst-label near">NEAR-TERM (0-3mo):</span> FERC ruling on PJM capacity cap revision; DOE loan terms and TMI restart progress; additional hyperscaler nuclear PPA announcements</li>
+    <li><span class="catalyst-label medium">MEDIUM-TERM (3-12mo):</span> TMI restart milestone approaching 2027 target; next PJM capacity auction results; potential Amazon/Google PPA using Constellation fleet</li>
+  </ul>
+  <div class="bear-case">
+    <strong>Bear Case</strong><br>
+    <strong>Primary Risk:</strong> <a href="https://www.constellationenergy.com/investors.html">Nuclear restart execution risk &mdash; TMI construction complications could slip 2027 delivery. NRC regulatory delays. Nuclear safety incidents. If AI inference demand plateaus, 20-year commitment becomes a liability.</a>
+  </div>
+</div>
+
+<div class="system-box"><p><strong>Bear Case:</strong> Nuclear regulatory delays and NRC opposition to restart projects. SMR cost overruns making next-generation nuclear uneconomic. Energy efficiency improvements reducing per-inference power demand. Political risk reversing bipartisan nuclear support.</p></div>
+<div class="system-box"><p><strong>Thesis Relevance:</strong> As inference costs deflate toward commodity levels, the competitive differentiator for hyperscalers shifts from model quality (eroded by open-weight alternatives) to energy cost. Nuclear PPAs are the infrastructure-layer moat in a world where software moats erode. The &ldquo;nuclear moat&rdquo; is more durable than any chip supply agreement because nuclear fleet operating licenses span 40-60 years.</p></div>
+<div class="system-box"><p><strong>Historical Analogues:</strong> (1) Long-term oil supply contracts during 1970s energy crisis creating structural cost advantages for secured buyers (Japan&rsquo;s bilateral oil deals with Gulf states). (2) Aluminum smelter power contracts in Iceland/Norway (1960s-present) creating permanent cost moats based on cheap hydroelectric power.</p></div>
+</div>
+
+<!-- ══════ CHAIN #6 ══════ -->
+<div class="chain-section" id="chain-6">
+<h3>#6 &mdash; BETA-04: Middle East Sovereign AI + Ultra-Cheap Solar</h3>
+<div class="badges-row">
+  <span class="badge-non-obv s4">NON_OBV 4</span>
+  <span class="badge-corr high">CORR 0.87</span>
+  <span class="badge-orig high">ORIG 5</span>
+  <span class="badge badge-pass">PASS</span>
+  <span class="badge badge-high">HIGH</span>
+</div>
+<div class="composite-bar-container">
+  <div class="composite-bar-label">Composite: 88.7</div>
+  <div class="composite-bar-bg"><div class="composite-bar-fill" style="width:88.7%"></div></div>
+</div>
+<p style="font-size:12px; color: var(--text-secondary); margin-bottom:8px;"><strong>Estimated lifetime:</strong> 5&ndash;15 years (structural) &mdash; solar cost advantage is geographic and permanent; sovereign capital deployment is multi-decade.</p>
+
+<p>Saudi Arabia&rsquo;s NEOM project claims solar at $0.0129/kWh (ACWA Power Rabigh II bid), while Saudi and UAE combined sovereign AI investment exceeds $1 trillion. The geographic inference cost differential is structural: $0.013/kWh in the Middle East versus $0.065/kWh in the US &mdash; a 5:1 energy cost advantage. This combination of ultra-cheap solar, sovereign capital, and low land cost creates a geographic inference cost arbitrage that Western hyperscalers cannot replicate domestically. Stargate UAE combines Barakah nuclear with Al Dhafra solar, creating a blended energy profile that provides both firm baseload and ultra-cheap marginal energy.</p>
+
+<div class="evidence-card">
+  <strong>Key Evidence:</strong><br>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://www.acwapower.com">ACWA Power Rabigh II: $0.0129/kWh solar bid (Saudi Arabia)</a></span>
+  <span class="corr-source"><span class="c-tag">C</span>Saudi/UAE combined $1T+ sovereign AI investment commitment</span>
+  <span class="corr-source"><span class="c-tag">C</span>Geographic inference cost: $0.013/kWh ME vs $0.065/kWh US (5:1 ratio)</span>
+</div>
+
+<div class="system-box"><p><strong>Geographic Scope:</strong> EMEA (Middle East primary &mdash; Saudi Arabia, UAE). Global impact on inference cost arbitrage.</p></div>
+<div class="system-box"><p><strong>Sector Tags:</strong> Energy (GICS 10), Solar, Sovereign AI, Technology.</p></div>
+<div class="system-box"><p><strong>Why Now:</strong> Saudi/UAE sovereign AI mega-projects announced 2025-2026; NEOM scale AI announced; $0.013/kWh solar cost is structural (geographic irradiance advantage), not cyclical.</p></div>
+<div class="system-box">
+  <p><strong>Bullish:</strong> US thin-film solar manufacturers (FSLR with IRA domestic content advantage for US-allied projects), Middle East utility-scale solar developers (ACWA Power).</p>
+  <p><strong>Bearish:</strong> US data center operators paying $0.065/kWh facing cost disadvantage; Western inference providers competing against Middle East inference cost structures.</p>
+</div>
+
+<div class="instrument-detail">
+  <h4><a href="https://finance.yahoo.com/quote/FSLR" class="ticker-link">FSLR</a> &mdash; First Solar Inc <span class="badge badge-high" style="font-size:9px;">LONG</span></h4>
+  <div class="instrument-meta"><span>EQUITY</span><span>NASDAQ</span><span>Confidence: MEDIUM</span><span>Chains: #6</span></div>
+  <div class="thesis-text">
+    <p>First Solar benefits from the Middle East sovereign AI solar buildout. As Saudi Arabia&rsquo;s 3.7 GW solar tender drives accelerating deployment, US-manufactured thin-film modules from First Solar are positioned as preferred technology for US-allied sovereign AI energy infrastructure. The IRA domestic content requirements provide First Solar&rsquo;s Ohio and Alabama facilities with a structural pricing advantage over Chinese panel makers in US-aligned Middle East projects.</p>
+  </div>
+  <div class="metrics-grid">
+    <div class="metric-item"><div class="metric-label">Market Cap</div><div class="metric-value"><a href="https://investor.firstsolar.com">~$20B</a></div><div class="metric-date">as of 14 Feb 2026</div></div>
+    <div class="metric-item"><div class="metric-label">Revenue Exposure</div><div class="metric-value"><a href="https://investor.firstsolar.com">100% solar modules</a></div><div class="metric-date">FY2025</div></div>
+    <div class="metric-item"><div class="metric-label">Price Action (3M)</div><div class="metric-value"><a href="https://finance.yahoo.com/quote/FSLR" style="color: var(--green);">+5-15%</a></div><div class="metric-date">17 Nov 2025 &rarr; 17 Feb 2026</div></div>
+    <div class="metric-item"><div class="metric-label">EV/Revenue</div><div class="metric-value"><a href="https://investor.firstsolar.com">~4.5x vs 5Y avg ~5.0x</a></div><div class="metric-date">as of 14 Feb 2026</div></div>
+    <div class="metric-item"><div class="metric-label">Liquidity</div><div class="metric-value"><a href="https://finance.yahoo.com/quote/FSLR">HIGH &mdash; ~$150M avg daily vol</a></div><div class="metric-date">30-day avg as of 14 Feb 2026</div></div>
+  </div>
+  <div class="bear-case">
+    <strong>Bear Case</strong><br>
+    <strong>Primary Risk:</strong> <a href="https://investor.firstsolar.com">Geopolitical risk in MENA region; solar intermittency requires expensive battery storage; NEOM project execution risk; US export controls on AI chips to Middle East limit sovereign AI buildout scale.</a>
+  </div>
+</div>
+
+<div class="system-box"><p><strong>Bear Case:</strong> Geopolitical risk in MENA region disrupting projects. Solar intermittency requiring expensive battery storage solutions. Project execution risk in Saudi mega-projects (NEOM track record). US export controls on AI chips limiting Middle East sovereign AI buildout.</p></div>
+<div class="system-box"><p><strong>Thesis Relevance:</strong> Middle East sovereign AI accelerates cognition-commoditization by providing inference at energy costs 5x cheaper than US, while simultaneously creating physical location moats that cannot be moved. The geographic expression of the physical-over-cognitive theme.</p></div>
+<div class="system-box"><p><strong>Historical Analogues:</strong> (1) Gulf states&rsquo; transition from oil producers to LNG exporters (1990s-2000s) &mdash; leveraging geographic resource advantage into new energy markets. (2) Iceland&rsquo;s aluminum smelting industry built on cheap geothermal power (1960s-present) &mdash; geographic energy advantage creating permanent industrial moat.</p></div>
+</div>
+
+<!-- ══════ CHAIN #7 ══════ -->
+<div class="chain-section" id="chain-7">
+<h3>#7 &mdash; EPSILON-03: EU AI Act Notified Body Market</h3>
+<div class="badges-row">
+  <span class="badge-non-obv s4">NON_OBV 4.5</span>
+  <span class="badge-corr high">CORR 0.80</span>
+  <span class="badge-orig high">ORIG 5</span>
+  <span class="badge badge-pass">PASS</span>
+  <span class="badge badge-high">HIGH</span>
+</div>
+<div class="composite-bar-container">
+  <div class="composite-bar-label">Composite: 88.6</div>
+  <div class="composite-bar-bg"><div class="composite-bar-fill" style="width:88.6%"></div></div>
+</div>
+<p style="font-size:12px; color: var(--text-secondary); margin-bottom:8px;"><strong>Estimated lifetime:</strong> 5&ndash;15 years (structural) &mdash; EU AI Act enforcement is permanent legislation; notified body designation creates multi-year moats.</p>
+
+<p>The EU AI Act&rsquo;s August 2, 2026 enforcement cliff for Annex III high-risk AI systems creates a mandatory certification market with zero supply (no EU member state has designated any AI Act notified bodies as of February 2026) and rapidly materializing demand. Penalties reach EUR 35M or 7% of global turnover for prohibited AI, EUR 15M or 3% for Annex III violations. The medical device regulation (MDR) analogy is instructive: notified body revenue surged 40% post-MDR enforcement as certification bottlenecks created pricing power. TIC sector incumbents (Bureau Veritas, SGS, Intertek) with adjacent notified body expertise are best-positioned to capture this windfall.</p>
+
+<div class="evidence-card">
+  <strong>Key Evidence:</strong><br>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024R1689">EU AI Act: August 2, 2026 enforcement cliff for Annex III high-risk AI systems</a></span>
+  <span class="corr-source"><span class="c-tag">C</span>Zero EU member state-designated AI Act notified bodies as of Feb 2026</span>
+  <span class="corr-source"><span class="c-tag">C</span>Penalties: up to EUR 35M/7% turnover (prohibited AI); EUR 15M/3% (Annex III)</span>
+  <span class="corr-source"><span class="c-tag">C</span>MDR analogy: notified body revenue surged 40% post-enforcement</span>
+</div>
+
+<div class="system-box"><p><strong>Geographic Scope:</strong> EMEA (EU regulatory scope). Any company deploying high-risk AI in the EU is subject.</p></div>
+<div class="system-box"><p><strong>Sector Tags:</strong> Industrials (GICS 20), TIC (Testing, Inspection, Certification), Regulatory Compliance.</p></div>
+<div class="system-box"><p><strong>Why Now:</strong> August 2, 2026 is immovable. The designation process takes 6-12 months. Organizations applying now are the only ones who will be ready for enforcement. Demand is guaranteed by law.</p></div>
+<div class="system-box">
+  <p><strong>Bullish:</strong> TIC companies with EU regulatory infrastructure (BVI.PA, SGSN.SW, ITRK.L), compliance technology providers, AI governance software vendors.</p>
+  <p><strong>Bearish:</strong> AI system providers without compliance budgets; small AI startups unable to absorb EUR 15M penalty risk without certification.</p>
+</div>
+
+<div class="instrument-detail">
+  <h4><a href="https://google.com/finance/quote/BVI:EPA" class="ticker-link">BVI.PA</a> &mdash; Bureau Veritas SA <span class="badge badge-high" style="font-size:9px;">LONG</span></h4>
+  <div class="instrument-meta"><span>EQUITY</span><span>Euronext Paris</span><span>Confidence: HIGH</span><span>Chains: #7, #11, #20</span></div>
+  <div class="thesis-text">
+    <p>Bureau Veritas is the most liquid publicly-listed proxy for the EU AI Act Notified Body market and the broader EU regulatory compliance wave. With existing notified body infrastructure in medical devices (MDR), machinery, and pressure equipment, Bureau Veritas holds directly transferable expertise for AI Act Annex III conformity assessment. The company is also positioned for AMLA compliance (EPSILON-02) and eIDAS2 digital identity (EPSILON-01), creating a multi-year revenue runway from sequential EU regulatory mandates. With ~EUR 9B market cap and EUR 6.5B revenue, AI Act compliance is an incremental growth driver with guaranteed demand.</p>
+  </div>
+  <div class="metrics-grid">
+    <div class="metric-item"><div class="metric-label">Market Cap</div><div class="metric-value"><a href="https://group.bureauveritas.com/investors">~EUR 9B (~$16B)</a></div><div class="metric-date">as of 14 Feb 2026</div></div>
+    <div class="metric-item"><div class="metric-label">Revenue Exposure</div><div class="metric-value"><a href="https://group.bureauveritas.com/investors">EU AI Act TAM: EUR 2-3B/year at full enforcement</a></div><div class="metric-date">Estimated</div></div>
+    <div class="metric-item"><div class="metric-label">Price Action (3M)</div><div class="metric-value"><a href="https://google.com/finance/quote/BVI:EPA" style="color: var(--green);">+5-10%</a></div><div class="metric-date">17 Nov 2025 &rarr; 17 Feb 2026</div></div>
+    <div class="metric-item"><div class="metric-label">EV/Revenue</div><div class="metric-value"><a href="https://group.bureauveritas.com/investors">~2.5x vs 5Y avg ~2.2x</a></div><div class="metric-date">as of 14 Feb 2026</div></div>
+    <div class="metric-item"><div class="metric-label">Liquidity</div><div class="metric-value"><a href="https://google.com/finance/quote/BVI:EPA">MED &mdash; ~EUR 20M avg daily vol</a></div><div class="metric-date">30-day avg as of 14 Feb 2026</div></div>
+  </div>
+  <div class="bear-case">
+    <strong>Bear Case</strong><br>
+    <strong>Primary Risk:</strong> <a href="https://group.bureauveritas.com/investors">Enforcement delays by EU Commission; mutual recognition agreements reducing certification burden; AI Act notified body market smaller than projected relative to total TIC revenue; non-EU TIC competitors (BSI Group, UL) entering market.</a>
+  </div>
+</div>
+
+<div class="system-box"><p><strong>Bear Case:</strong> EU enforcement delays; Commission guidance softening Annex III requirements; mutual recognition agreements with non-EU countries reducing certification burden; self-assessment provisions expanding beyond current scope.</p></div>
+<div class="system-box"><p><strong>Thesis Relevance:</strong> As AI cognition commoditizes and deployment proliferates, the regulatory overhead of deploying high-risk AI in the EU grows proportionally. Compliance services market grows with AI adoption rather than being disrupted by it &mdash; the inverse of typical technology disruption dynamics.</p></div>
+<div class="system-box"><p><strong>Historical Analogues:</strong> (1) Medical Device Regulation (MDR) enforcement creating notified body revenue surge of 40% (2017-2021). (2) GDPR enforcement creating a $15B+ privacy compliance industry by 2025 &mdash; regulatory mandates creating guaranteed demand for service providers.</p></div>
+</div>
+
+<!-- ══════ CHAIN #8 ══════ -->
+<div class="chain-section" id="chain-8">
+<h3>#8 &mdash; BETA-01: PJM Capacity Market Failure</h3>
+<div class="badges-row">
+  <span class="badge-non-obv s4">NON_OBV 4</span>
+  <span class="badge-corr high">CORR 1.00</span>
+  <span class="badge-orig high">ORIG 4</span>
+  <span class="badge badge-pass">PASS</span>
+  <span class="badge badge-high">HIGH</span>
+</div>
+<div class="composite-bar-container">
+  <div class="composite-bar-label">Composite: 88.6</div>
+  <div class="composite-bar-bg"><div class="composite-bar-fill" style="width:88.6%"></div></div>
+</div>
+<p style="font-size:12px; color: var(--text-secondary); margin-bottom:8px;"><strong>Estimated lifetime:</strong> 5&ndash;15 years (structural) &mdash; PJM capacity constraints deepen as AI load grows; FERC reform timeline extends resolution.</p>
+
+<p>The PJM 2024/25 Base Residual Auction cleared at $333.44/MW-day &mdash; the administrative price cap, hit for the first time since 2012. PJM projects 32 GW of additional load by 2030, with 94% attributable to data centers, yet the reserve margin target is 6,625 MW below required levels. This is the first structural US grid reliability crisis driven by a single demand category (AI). At $333.44/MW-day, each MW of existing capacity generates ~$121K/year in capacity payments alone. FERC&rsquo;s December 18, 2025 co-location rule resolves hyperscaler co-location governance, while the 2026 PJM auction results (due March-April 2026) will confirm continuation of cap-level pricing.</p>
+
+<div class="evidence-card">
+  <strong>Key Evidence:</strong><br>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://www.pjm.com/-/media/DotCom/markets-ops/rpm/rpm-auction-info/2027-2028/2027-2028-bra-report.pdf">PJM 2024/25 BRA: $333.44/MW-day (administrative cap hit)</a></span>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://www.ieefa.org/resources/projected-data-center-growth-spurs-pjm-capacity-prices-factor-10">IEEFA: 94% of PJM 2024-2030 peak load growth from data centers</a></span>
+  <span class="corr-source"><span class="c-tag">C</span>PJM: 6,625 MW below reserve margin target; 32 GW projected additional load by 2030</span>
+  <span class="corr-source"><span class="c-tag">C</span>FERC co-location rule (18 Dec 2025): resolves hyperscaler co-location governance</span>
+</div>
+
+<div class="system-box"><p><strong>Geographic Scope:</strong> Americas (PJM footprint &mdash; Mid-Atlantic, Ohio Valley, largest US grid operator by load).</p></div>
+<div class="system-box"><p><strong>Sector Tags:</strong> Utilities (GICS 55), Energy Equipment (GICS 10), Industrials (GICS 20).</p></div>
+<div class="system-box"><p><strong>Why Now:</strong> 2026 PJM auction results (March-April 2026) will confirm or deny continuation of cap-level pricing. FERC reviewing whether to raise $333.44/MW-day cap &mdash; further upside if cap is lifted.</p></div>
+<div class="system-box">
+  <p><strong>Bullish:</strong> Existing PJM capacity holders (CEG ~32 GW nuclear, VST ~6.4 GW nuclear + 25 GW gas), power distribution equipment (ETN, VRT), data center REITs with PJM interconnection.</p>
+  <p><strong>Bearish:</strong> Hyperscalers facing rising energy costs in PJM; data center developers facing years of interconnection delays.</p>
+</div>
+
+<div class="system-box"><p><strong>Bear Case:</strong> Data center build rate slows; new natural gas capacity floods PJM market; demand response substitutes for firm capacity; FERC intervention restructures capacity market reducing scarcity rents.</p></div>
+<div class="system-box"><p><strong>Thesis Relevance:</strong> PJM capacity market failure is the grid-level expression of cognition-commoditization &mdash; as AI compute becomes cheaper, physical power delivery becomes the binding constraint, and existing capacity holders capture scarcity rents.</p></div>
+<div class="system-box"><p><strong>Historical Analogues:</strong> (1) California electricity crisis (2000-2001): demand exceeded supply, creating windfall for generators at $250-$1,000/MWh spot prices. (2) Texas ERCOT winter storm (2021): capacity scarcity drove spot prices to $9,000/MWh, demonstrating that grid reliability has no substitute.</p></div>
+</div>
+
+<!-- ══════ CHAIN #9 ══════ -->
+<div class="chain-section" id="chain-9">
+<h3>#9 &mdash; DELTA-3: Data Center Land + Power Bundle</h3>
+<div class="badges-row">
+  <span class="badge-non-obv s4">NON_OBV 4</span>
+  <span class="badge-corr high">CORR 0.90</span>
+  <span class="badge-orig high">ORIG 4</span>
+  <span class="badge badge-pass">PASS</span>
+  <span class="badge badge-high">HIGH</span>
+</div>
+<div class="composite-bar-container">
+  <div class="composite-bar-label">Composite: 84.3</div>
+  <div class="composite-bar-bg"><div class="composite-bar-fill" style="width:84.3%"></div></div>
+</div>
+<p style="font-size:12px; color: var(--text-secondary); margin-bottom:8px;"><strong>Estimated lifetime:</strong> 5&ndash;15 years (structural) &mdash; interconnection queue timelines of 7+ years ensure scarcity persists through the decade.</p>
+
+<p>Northern Virginia&rsquo;s interconnection queue extends beyond 7 years. Phoenix/Scottsdale data centers consume 177 million gallons/day of water. Co-located power purchase rights command a 20-40% premium over adjacent industrial land without power access. FERC Order 2023 (March 2024) initiated interconnection reform, but the structural reality is that land adjacent to grid infrastructure with secured interconnection rights has become the scarcest commodity in AI buildout. North American data center vacancy hit a record low 2.3% in H1 2025, with 73% of construction preleased (JLL).</p>
+
+<div class="evidence-card">
+  <strong>Key Evidence:</strong><br>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://www.jll.com/en-us/newsroom/data-center-availability-crisis-deepens-as-vacancy-hits-historic-low">JLL: North America data center vacancy 2.3% (record low); 73% preleased</a></span>
+  <span class="corr-source"><span class="c-tag">C</span>Northern Virginia interconnection queue: 7+ year wait</span>
+  <span class="corr-source"><span class="c-tag">C</span>Co-located power purchase rights: 20-40% premium over adjacent land</span>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://www.ferc.gov">FERC Order 2023 (March 2024): interconnection reform</a></span>
+</div>
+
+<div class="system-box"><p><strong>Geographic Scope:</strong> Americas (Northern Virginia, Phoenix, Dallas/Fort Worth &mdash; top 3 US data center markets).</p></div>
+<div class="system-box"><p><strong>Sector Tags:</strong> Real Estate (GICS 60), Data Centers, Infrastructure.</p></div>
+<div class="system-box"><p><strong>Why Now:</strong> Northern Virginia 7+ year interconnection queue; JLL H2 2025 reports record vacancy low; existing power-adjacent land = moat that cannot be reproduced on AI-buildout timeline.</p></div>
+<div class="system-box">
+  <p><strong>Bullish:</strong> Data center REITs with secured interconnection (EQIX, DLR, IRM), utility-scale land developers in power-constrained markets.</p>
+  <p><strong>Bearish:</strong> Greenfield data center developers facing 7+ year interconnection delays; hyperscalers whose build timelines extend beyond guidance.</p>
+</div>
+
+<div class="instrument-detail">
+  <h4><a href="https://finance.yahoo.com/quote/EQIX" class="ticker-link">EQIX</a> &mdash; Equinix Inc <span class="badge badge-high" style="font-size:9px;">LONG</span></h4>
+  <div class="instrument-meta"><span>REIT</span><span>NASDAQ</span><span>Confidence: HIGH</span><span>Chains: #4, #9</span></div>
+  <div class="thesis-text">
+    <p>Equinix is the world&rsquo;s largest data center colocation REIT with 250+ IBX data centers across 70+ metros. Each Equinix campus with existing grid interconnection agreements holds an asset analogous to a spectrum license &mdash; a regulatory entitlement that took years to obtain, is geographically anchored, and cannot be replicated. With ~$70B market cap, ~$9B revenue, and ~2.5% dividend yield, Equinix provides stable income with structural scarcity-driven growth.</p>
+  </div>
+  <div class="metrics-grid">
+    <div class="metric-item"><div class="metric-label">Market Cap</div><div class="metric-value"><a href="https://investor.equinix.com">~$70B</a></div><div class="metric-date">as of 14 Feb 2026</div></div>
+    <div class="metric-item"><div class="metric-label">Revenue Exposure</div><div class="metric-value"><a href="https://investor.equinix.com">100% data center colocation</a></div><div class="metric-date">FY2025</div></div>
+    <div class="metric-item"><div class="metric-label">Price Action (3M)</div><div class="metric-value"><a href="https://finance.yahoo.com/quote/EQIX" style="color: var(--green);">+10-15%</a></div><div class="metric-date">17 Nov 2025 &rarr; 17 Feb 2026</div></div>
+    <div class="metric-item"><div class="metric-label">EV/Revenue</div><div class="metric-value"><a href="https://investor.equinix.com">~7.8x vs 5Y avg ~7.0x</a></div><div class="metric-date">as of 14 Feb 2026</div></div>
+    <div class="metric-item"><div class="metric-label">Liquidity</div><div class="metric-value"><a href="https://finance.yahoo.com/quote/EQIX">HIGH &mdash; ~$300M avg daily vol</a></div><div class="metric-date">30-day avg as of 14 Feb 2026</div></div>
+  </div>
+  <div class="bear-case">
+    <strong>Bear Case</strong><br>
+    <strong>Primary Risk:</strong> <a href="https://investor.equinix.com/sec-filings">Hyperscaler direct-build strategies reducing colocation demand; rising interest rates compressing REIT valuations; PJM power cost escalation raising opex.</a>
+  </div>
+</div>
+
+<div class="system-box"><p><strong>Bear Case:</strong> FERC interconnection reform materializing faster than expected. Alternative AI compute locations emerge (Middle East solar, Nordic hydro). Edge computing reduces demand for large central data centers. Hyperscaler vertical integration (build-to-own vs lease) reduces colocation demand.</p></div>
+<div class="system-box"><p><strong>Thesis Relevance:</strong> Data center land+power bundles are the real estate expression of cognition-commoditization &mdash; as intelligence becomes cheap, the physical locations where it can be deployed at scale become scarce and valuable.</p></div>
+<div class="system-box"><p><strong>Historical Analogues:</strong> (1) Manhattan commercial real estate premiums driven by fiber optic density and exchange proximity (1990s-2000s). (2) Tower company emergence from telecom overbuild (2001-2010) &mdash; AMT and CCI became durable infrastructure franchises while telecom operators struggled.</p></div>
+</div>
+
+<!-- ══════ CHAIN #10 ══════ -->
+<div class="chain-section" id="chain-10">
+<h3>#10 &mdash; DELTA-4: Rare Earth Export Controls</h3>
+<div class="badges-row">
+  <span class="badge-non-obv s4">NON_OBV 4</span>
+  <span class="badge-corr high">CORR 0.90</span>
+  <span class="badge-orig high">ORIG 4</span>
+  <span class="badge badge-pass">PASS</span>
+  <span class="badge badge-high">HIGH</span>
+</div>
+<div class="composite-bar-container">
+  <div class="composite-bar-label">Composite: 84.3</div>
+  <div class="composite-bar-bg"><div class="composite-bar-fill" style="width:84.3%"></div></div>
+</div>
+<p style="font-size:12px; color: var(--text-secondary); margin-bottom:8px;"><strong>Estimated lifetime:</strong> 5&ndash;15 years (structural) &mdash; mine development timelines of 10-15 years mean controls create a decade of MP/Lynas monopoly.</p>
+
+<p>China imposed export controls on 7 heavy rare earth elements in April 2025, expanded to 12+ REEs in October 2025, then temporarily suspended controls in November 2025 as a trade truce signal (12-month window). The DOD invested $400M in equity in MP Materials plus a $110/kg NdPr price floor (July 10, 2025, SEC 8-K). Only non-Chinese processors (MP Materials at Mountain Pass, Lynas at Mt Weld) can capture the 10-15 year window before alternative supply emerges, because mine development timelines of 29 years mean no new Western rare earth operation can reach commercial scale before the mid-2030s.</p>
+
+<div class="evidence-card">
+  <strong>Key Evidence:</strong><br>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://csis.org/analysis/chinas-new-rare-earth-and-magnet-restrictions-threaten-us-defense-supply-chains">CSIS: China export controls on 7 HREEs (April 2025), expanded to 12+ (Oct 2025)</a></span>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://www.mpmaterials.com">DOD: $400M equity + $110/kg NdPr floor, 10-year contract (July 2025 SEC 8-K)</a></span>
+  <span class="corr-source"><span class="c-tag">C</span><a href="https://investingnews.com/rare-earths-forecast/">November 2025 suspension (12-month window); expiry ~November 2026</a></span>
+  <span class="corr-source"><span class="c-tag">C</span>China controls ~90% of global NdFeB magnet processing capacity</span>
+</div>
+
+<div class="system-box"><p><strong>Geographic Scope:</strong> Multi-Region (US/Australia supply, China demand/control). 0.1% threshold for Chinese-origin content makes supply chain diversification mandatory for Western defense contractors.</p></div>
+<div class="system-box"><p><strong>Sector Tags:</strong> Materials (GICS 15), Rare Earths, Defense, Critical Minerals.</p></div>
+<div class="system-box"><p><strong>Why Now:</strong> November 2025 suspension expires ~November 2026 &mdash; binary catalyst when controls either resume or are replaced by permanent trade architecture. DOD price floor provides downside protection regardless of trade outcome.</p></div>
+<div class="system-box">
+  <p><strong>Bullish:</strong> Non-Chinese REE producers (MP, Lynas), defense primes with secure REE supply, NdFeB magnet manufacturers outside China.</p>
+  <p><strong>Bearish:</strong> Chinese REE exporters losing market access; manufacturers dependent on Chinese REE supply chain.</p>
+</div>
+
+<div class="instrument-detail">
+  <h4><a href="https://google.com/finance/quote/LYC:ASX" class="ticker-link">LYC.AX</a> &mdash; Lynas Rare Earths Ltd <span class="badge badge-high" style="font-size:9px;">LONG</span></h4>
+  <div class="instrument-meta"><span>EQUITY</span><span>ASX</span><span>Confidence: HIGH</span><span>Chains: #4, #10, #14</span></div>
+  <div class="thesis-text">
+    <p>Lynas is the only significant non-Chinese heavy rare earth processor, with Mt Weld mine in Western Australia (25+ year mine life) and processing in Malaysia with a developing Texas facility. China&rsquo;s export controls on terbium and dysprosium (April 2025) effectively weaponize the heavy rare earth supply chain for military and geopolitical leverage. Lynas is being repriced from commodity miner to strategic infrastructure asset &mdash; the same transition MP Materials is undergoing via DOD backing. With ~AUD 6B market cap and 10,500-11,000 tonnes NdPr/year production, Lynas is the ex-China HREE supply chain.</p>
+  </div>
+  <div class="metrics-grid">
+    <div class="metric-item"><div class="metric-label">Market Cap</div><div class="metric-value"><a href="https://www.lynasrareearths.com/investors/">~AUD 6B (~$4B)</a></div><div class="metric-date">as of 14 Feb 2026</div></div>
+    <div class="metric-item"><div class="metric-label">Revenue Exposure</div><div class="metric-value"><a href="https://www.lynasrareearths.com/investors/">100% rare earths</a></div><div class="metric-date">FY2025</div></div>
+    <div class="metric-item"><div class="metric-label">Price Action (3M)</div><div class="metric-value"><a href="https://google.com/finance/quote/LYC:ASX" style="color: var(--green);">+10-20%</a></div><div class="metric-date">17 Nov 2025 &rarr; 17 Feb 2026</div></div>
+    <div class="metric-item"><div class="metric-label">EV/Revenue</div><div class="metric-value"><a href="https://www.lynasrareearths.com/investors/">~8x vs 5Y avg ~10x</a></div><div class="metric-date">as of 14 Feb 2026</div></div>
+    <div class="metric-item"><div class="metric-label">Liquidity</div><div class="metric-value"><a href="https://google.com/finance/quote/LYC:ASX">MED &mdash; ~AUD 30M avg daily vol</a></div><div class="metric-date">30-day avg as of 14 Feb 2026</div></div>
+  </div>
+  <div class="bear-case">
+    <strong>Bear Case</strong><br>
+    <strong>Primary Risk:</strong> <a href="https://www.lynasrareearths.com/investors/">Malaysia processing license renewal risk; AUD currency exposure; trade truce removes geopolitical premium; Texas facility pre-revenue with execution risk.</a>
+  </div>
+</div>
+
+<div class="system-box"><p><strong>Bear Case:</strong> Trade truce makes controls permanent-off, removing scarcity premium. Recycling displaces primary REE demand. US permitting delays slow domestic alternatives. Ferrite magnet substitutes improve performance enough to reduce NdFeB demand.</p></div>
+<div class="system-box"><p><strong>Thesis Relevance:</strong> Rare earth export controls weaponize the NdFeB magnet supply chain that every AI server, EV motor, and wind turbine requires. Physical material scarcity as the ultimate constraint on cognitive abundance &mdash; no amount of AI model improvement can substitute for the magnets in the server&rsquo;s cooling fans.</p></div>
+<div class="system-box"><p><strong>Historical Analogues:</strong> (1) OPEC oil embargo (1973) creating decade-long structural shift in energy markets and permanent changes to supply chain architecture. (2) China rare earth export quota system (2010-2014) that led to WTO dispute and initial Western supply chain diversification &mdash; the current controls are the second, more sophisticated iteration.</p></div>
+</div>
+
+<!-- ============ REFERENCES ============ -->
+<div class="references-section">
+  <h2 id="references">References</h2>
+
+  <div class="ref-entry" id="ref1">[1] Wood Mackenzie, &ldquo;Transformer Market Outlook: Global Supply Deficit Analysis&rdquo; (2025). <a href="https://www.woodmac.com" target="_blank">woodmac.com</a></div>
+  <div class="ref-entry" id="ref2">[2] LBNL Electricity Markets &amp; Policy Group, &ldquo;Queued Up: Characteristics of Power Plants Seeking Transmission Interconnection&rdquo; (Jan 2026). <a href="https://emp.lbl.gov/queues" target="_blank">emp.lbl.gov</a></div>
+  <div class="ref-entry" id="ref3">[3] NERC, &ldquo;2025 Long-Term Reliability Assessment&rdquo; (Jan 2026). <a href="https://www.nerc.com/pa/RAPA/ra/Pages/default.aspx" target="_blank">nerc.com</a></div>
+  <div class="ref-entry" id="ref4">[4] PJM Interconnection, &ldquo;2027/2028 Base Residual Auction Report&rdquo; (2025). <a href="https://www.pjm.com/-/media/DotCom/markets-ops/rpm/rpm-auction-info/2027-2028/2027-2028-bra-report.pdf" target="_blank">pjm.com</a></div>
+  <div class="ref-entry" id="ref5">[5] IEEFA, &ldquo;Projected Data Center Growth Spurs PJM Capacity Prices by Factor of 10&rdquo; (2025). <a href="https://www.ieefa.org/resources/projected-data-center-growth-spurs-pjm-capacity-prices-factor-10" target="_blank">ieefa.org</a></div>
+  <div class="ref-entry" id="ref6">[6] BHP Insights, &ldquo;Why AI Tools and Data Centres Are Driving Copper Demand&rdquo; (Jan 2025). <a href="https://www.bhp.com/news/bhp-insights/2025/01/why-ai-tools-and-data-centres-are-driving-copper-demand" target="_blank">bhp.com</a></div>
+  <div class="ref-entry" id="ref7">[7] Cochilco, &ldquo;Water Use in Chilean Copper Mining 2024 Report&rdquo; (2025). <a href="https://www.cochilco.cl/" target="_blank">cochilco.cl</a> <span class="corr-source"><span class="c-tag">C</span></span></div>
+  <div class="ref-entry" id="ref8">[8] S&amp;P Global / SME, &ldquo;Mine Development Timelines: US Average 29 Years&rdquo; (Jun 2024). <a href="https://me.smenet.org" target="_blank">me.smenet.org</a></div>
+  <div class="ref-entry" id="ref9">[9] SoftBank Group, &ldquo;ABB Robotics Acquisition Announcement: $5.375B&rdquo; (2025). <a href="https://group.softbank/en/news" target="_blank">softbank.jp</a></div>
+  <div class="ref-entry" id="ref10">[10] Skild AI, &ldquo;$1.4B Raise for Universal Robot Foundation Model&rdquo; (14 Jan 2026). <a href="https://www.skild.ai" target="_blank">skild.ai</a></div>
+  <div class="ref-entry" id="ref11">[11] ABB Ltd, &ldquo;Q4 2025 Results: Orders Exceed $10.3B&rdquo; (Feb 2026). <a href="https://new.abb.com/investorrelations" target="_blank">abb.com</a></div>
+  <div class="ref-entry" id="ref12">[12] Meta, &ldquo;Nuclear Energy Projects to Power American AI Leadership&rdquo; (Jan 2026). <a href="https://about.fb.com/news/2026/01/meta-nuclear-energy-projects-power-american-ai-leadership/" target="_blank">about.fb.com</a></div>
+  <div class="ref-entry" id="ref13">[13] Data Center Dynamics, &ldquo;Microsoft Three Mile Island PPA: 835 MW, 20-Year Contract&rdquo; (Nov 2025). <a href="https://www.datacenterdynamics.com" target="_blank">datacenterdynamics.com</a></div>
+  <div class="ref-entry" id="ref14">[14] CNBC, &ldquo;Trump DOE Loan for TMI Nuclear Restart: $1B&rdquo; (18 Nov 2025). <a href="https://cnbc.com/2025/11/18/trump-nuclear-three-mile-island-crane-loan-constellation-ceg.html" target="_blank">cnbc.com</a></div>
+  <div class="ref-entry" id="ref15">[15] FTI Consulting, &ldquo;Powerful Duo: Nuclear + Data Centers&rdquo; (2025). <a href="https://fticonsulting.com/insights/articles/powerful-duo-nuclear-data-centers" target="_blank">fticonsulting.com</a></div>
+  <div class="ref-entry" id="ref16">[16] ACWA Power, &ldquo;Rabigh II Solar PPA: $0.0129/kWh Bid&rdquo; (2025). <a href="https://www.acwapower.com" target="_blank">acwapower.com</a></div>
+  <div class="ref-entry" id="ref17">[17] EU AI Act, &ldquo;Regulation (EU) 2024/1689 on Artificial Intelligence&rdquo; (Aug 2024). <a href="https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024R1689" target="_blank">eur-lex.europa.eu</a></div>
+  <div class="ref-entry" id="ref18">[18] JLL, &ldquo;North America Data Center H2 2025: Vacancy Hits Historic Low at 2.3%&rdquo; (2025). <a href="https://www.jll.com/en-us/newsroom/data-center-availability-crisis-deepens-as-vacancy-hits-historic-low" target="_blank">jll.com</a></div>
+  <div class="ref-entry" id="ref19">[19] CSIS, &ldquo;China&rsquo;s New Rare Earth and Magnet Restrictions Threaten US Defense Supply Chains&rdquo; (2025). <a href="https://csis.org/analysis/chinas-new-rare-earth-and-magnet-restrictions-threaten-us-defense-supply-chains" target="_blank">csis.org</a></div>
+  <div class="ref-entry" id="ref20">[20] MP Materials, &ldquo;DOD Equity Investment: $400M + $110/kg NdPr Floor&rdquo; (10 Jul 2025). <a href="https://www.mpmaterials.com" target="_blank">www.mpmaterials.com</a></div>
+  <div class="ref-entry" id="ref21">[21] TrendForce, &ldquo;SK Hynix HBM4 Allocation: ~70% of NVIDIA Vera Rubin&rdquo; (28 Jan 2026). <a href="https://www.trendforce.com/news/2026/01/28/" target="_blank">trendforce.com</a> <span class="corr-source"><span class="c-tag">C</span></span></div>
+  <div class="ref-entry" id="ref22">[22] TSMC, &ldquo;Q4 2025 Quarterly Results: Revenue $33.73B, Gross Margin 62.3%&rdquo; (Jan 2026). <a href="https://investor.tsmc.com/english/quarterly-results/2025/q4" target="_blank">investor.tsmc.com</a></div>
+  <div class="ref-entry" id="ref23">[23] Alphabet, &ldquo;Q4 2025 Earnings: Google Search Revenue $63.1B (+17% YoY)&rdquo; (Feb 2026). <a href="https://www.sec.gov/Archives/edgar/data/1652044/000165204426000012/googexhibit991q42025.htm" target="_blank">sec.gov</a></div>
+  <div class="ref-entry" id="ref24">[24] Search Engine Land, &ldquo;Google AI Overviews Drive Drop in Organic and Paid CTR&rdquo; (Feb 2026). <a href="https://searchengineland.com/google-ai-overviews-drive-drop-organic-paid-ctr-464212" target="_blank">searchengineland.com</a> <span class="corr-source"><span class="c-tag">C</span></span></div>
+  <div class="ref-entry" id="ref25">[25] Microsoft, &ldquo;FY2026 Q2 Earnings: Azure Gross Margin 67%, Capex $37.5B/quarter&rdquo; (Jan 2026). <a href="https://www.microsoft.com/en-us/investor/earnings/fy-2026-q2/press-release-webcast" target="_blank">microsoft.com</a></div>
+  <div class="ref-entry" id="ref26">[26] Fortune / Evercore, &ldquo;AI Tech Red Flag: Hyperscaler Capex and Cash Flow Concerns&rdquo; (17 Feb 2026). <a href="https://fortune.com/2026/02/17/ai-tech-red-flag-capex-hyperscalers-cash-flow-negative-evercore/" target="_blank">fortune.com</a> <span class="corr-source"><span class="c-tag">C</span></span></div>
+  <div class="ref-entry" id="ref27">[27] Alibaba Group, &ldquo;Qwen3 Technical Report&rdquo; (May 2025). <a href="https://arxiv.org/html/2505.09388v1" target="_blank">arxiv.org</a></div>
+  <div class="ref-entry" id="ref28">[28] Constellation Research, &ldquo;Alibaba Cloud Q2 Revenue Surges 34% Courtesy of AI Qwen Momentum&rdquo; (2026). <a href="https://constellationr.com/blog-news/insights/alibaba-cloud-q2-revenue-surges-34-courtesy-ai-qwen-momentum" target="_blank">constellationr.com</a></div>
+  <div class="ref-entry" id="ref29">[29] Fastmarkets, &ldquo;Dried-Up Feedstock Pipeline: Cobalt Prices Soaring&rdquo; (2025). <a href="https://www.fastmarkets.com/insights/dried-up-feedstock-pipeline-cobalt-prices-soaring-2025-deficit/" target="_blank">fastmarkets.com</a></div>
+  <div class="ref-entry" id="ref30">[30] Eaton Corporation, &ldquo;Annual Reports and Financial Information&rdquo; (2025-2026). <a href="https://ir.eaton.com/financial-information/annual-reports" target="_blank">ir.eaton.com</a></div>
+  <div class="ref-entry" id="ref31">[31] Constellation Energy, &ldquo;Investor Relations: Annual Reports&rdquo; (2025-2026). <a href="https://www.constellationenergy.com/investors.html" target="_blank">constellationenergy.com</a></div>
+  <div class="ref-entry" id="ref32">[32] Bureau Veritas, &ldquo;Investor Relations&rdquo; (2025-2026). <a href="https://group.bureauveritas.com/investors" target="_blank">bureauveritas.com</a></div>
+  <div class="ref-entry" id="ref33">[33] Freeport-McMoRan, &ldquo;Investor Relations&rdquo; (2025-2026). <a href="https://fcx.com" target="_blank">fcx.com</a></div>
+  <div class="ref-entry" id="ref34">[34] Equinix, &ldquo;Investor Relations&rdquo; (2025-2026). <a href="https://investor.equinix.com" target="_blank">investor.equinix.com</a></div>
+  <div class="ref-entry" id="ref35">[35] Lynas Rare Earths, &ldquo;ASX Announcements&rdquo; (2025-2026). <a href="https://www.lynasrareearths.com/investors/asx-announcements/" target="_blank">lynasrareearths.com</a></div>
+  <div class="ref-entry" id="ref36">[36] SK Hynix, &ldquo;Investor Relations Overview&rdquo; (2025-2026). <a href="https://www.skhynix.com" target="_blank">skhynix.com</a></div>
+  <div class="ref-entry" id="ref37">[37] TrendForce, &ldquo;Japan Photoresist Export Controls Impact on CXMT&rdquo; (3 Dec 2025). <a href="https://www.trendforce.com/news/2025/12/03/" target="_blank">trendforce.com</a> <span class="corr-source"><span class="c-tag">C</span></span></div>
+  <div class="ref-entry" id="ref38">[38] IEA, &ldquo;Rare Earth Supply Concentration Commentary&rdquo; (2025). <a href="https://www.iea.org" target="_blank">iea.org</a></div>
+  <div class="ref-entry" id="ref39">[39] Investing News Network, &ldquo;Rare Earths 2026 Forecast&rdquo; (2026). <a href="https://investingnews.com/rare-earths-forecast/" target="_blank">investingnews.com</a></div>
+  <div class="ref-entry" id="ref40">[40] New America Foundation, &ldquo;The DR Congo&rsquo;s Cobalt Power Move&rdquo; (2026). <a href="https://newamerica.org/planetary-politics/blog/the-dr-congos-cobalt-power-move/" target="_blank">newamerica.org</a></div>
+</div>
+
+</div>
+
+<div class="footer">
+  <p><strong>Methodology.</strong> This report was produced through the Market Shift Detection pipeline v10.0-cognition-commoditization. Phase 1: Eight autonomous Tier 1 agents (Alpha, Beta, Gamma, Delta, Epsilon, Zeta, Eta, Theta) scanned distinct market sectors for anomalies and built multi-hop causal chains. Phase 1.5: Deduplication removed redundant chains. Phase 2: Eight Layer 2 Verifier agents independently grounded each chain, verifying every factual claim against primary sources. Phase 2.5: Cross-Verifier Arbitrator calibrated scores, resolved divergences, and applied concentration/quality checks (7 WARNING flags raised). Phase 2.75: Instrument Identification Agent extracted per-instrument analysis with key metrics, catalyst timelines, and bear cases. Phase 3: Synthesis Agent compiled this report with composite scores on 0-100 scale and per-chain investment narratives. Composite formula: (CORR &times; 3 + (ORIG/5) &times; 2 + (NON_OBV/5) &times; 2) / 7 &times; 10 + GEO_BONUS + SECTOR_BONUS. Only chains with PASS or DOWNGRADE verdicts are included (0 KILL verdicts in this run). 34 PASS chains and 7 DOWNGRADE chains survived calibration.</p>
+  <p><strong>Pipeline Flags:</strong> DATA_CONSISTENCY (WARNING) | CONCENTRATION (WARNING) | ACCURACY_REGRESSION (WARNING) | RECENCY_REGRESSION (WARNING) | GEOGRAPHIC_CONCENTRATION (WARNING) | SECTOR_CONCENTRATION (WARNING) | BIG_TECH_CONCENTRATION (WARNING). No FAIL or ALERT flags.</p>
+  <p><strong>Disclaimer.</strong> This report is produced by an automated research pipeline and is intended for informational purposes only. It does not constitute investment advice, a solicitation, or an offer to buy or sell any securities. All data is sourced from publicly available information and may contain errors despite multi-layer verification. Past performance is not indicative of future results. The pipeline identified 16 factual errors across 41 chains (catalogued in calibration_report.md). Users should independently verify all claims before making investment decisions.</p>
+  <p class="footer-meta">PRODUCED_AT: 17 Feb 2026 &mdash; Run ID: run_20260217_001 &mdash; Pipeline: v10.0-cognition-commoditization &mdash; Confidential &mdash; Deep Research v10.0</p>
+</div>
+
+</body>
+</html>
